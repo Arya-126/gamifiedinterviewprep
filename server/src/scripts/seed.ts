@@ -1,0 +1,248 @@
+import { db } from '../firebase';
+import bcrypt from 'bcryptjs';
+import { v4 as uuidv4 } from 'uuid';
+
+const SAMPLE_TOPICS = [
+  {
+    id: uuidv4(),
+    subject: 'Programming',
+    topic: 'JavaScript Basics',
+    subtopic: 'Fundamentals',
+    description: 'Learn the fundamentals of JavaScript programming',
+    difficulty: 'beginner',
+    icon: '🔤',
+    isActive: true
+  },
+  {
+    id: uuidv4(),
+    subject: 'Web Development',
+    topic: 'React Hooks',
+    subtopic: 'State Management',
+    description: 'Master React hooks for functional components',
+    difficulty: 'intermediate',
+    icon: '⚛️',
+    isActive: true
+  },
+  {
+    id: uuidv4(),
+    subject: 'Programming',
+    topic: 'TypeScript Advanced',
+    subtopic: 'Generics and Patterns',
+    description: 'Advanced TypeScript patterns and techniques',
+    difficulty: 'advanced',
+    icon: '📘',
+    isActive: true
+  },
+  {
+    id: uuidv4(),
+    subject: 'Web Development',
+    topic: 'Web Performance',
+    subtopic: 'Optimization Techniques',
+    description: 'Optimize web applications for speed',
+    difficulty: 'intermediate',
+    icon: '⚡',
+    isActive: true
+  },
+  {
+    id: uuidv4(),
+    subject: 'CSS',
+    topic: 'CSS Grid',
+    subtopic: 'Layout Basics',
+    description: 'Master CSS Grid for modern layouts',
+    difficulty: 'beginner',
+    icon: '🎨',
+    isActive: true
+  }
+];
+
+const SAMPLE_QUESTIONS = [
+  // JavaScript Basics
+  {
+    id: uuidv4(),
+    topicId: SAMPLE_TOPICS[0].id,
+    questionText: 'What does var, let, and const mean in JavaScript?',
+    options: [
+      'They are variable declaration keywords with different scoping rules',
+      'They are the same thing',
+      'They are only used in loops',
+      'They are only for numbers'
+    ],
+    correctAnswer: 0,
+    difficulty: 'beginner',
+    isApproved: true
+  },
+  {
+    id: uuidv4(),
+    topicId: SAMPLE_TOPICS[0].id,
+    questionText: 'What is closure in JavaScript?',
+    options: [
+      'When you close a browser tab',
+      'A function that has access to variables from its outer scope',
+      'A way to end a program',
+      'An error message'
+    ],
+    correctAnswer: 1,
+    difficulty: 'intermediate',
+    isApproved: true
+  },
+  // React Hooks
+  {
+    id: uuidv4(),
+    topicId: SAMPLE_TOPICS[1].id,
+    questionText: 'What does useState hook return?',
+    options: [
+      'An array with state value and setter function',
+      'Just the state value',
+      'Just the setter function',
+      'Nothing'
+    ],
+    correctAnswer: 0,
+    difficulty: 'beginner',
+    isApproved: true
+  },
+  {
+    id: uuidv4(),
+    topicId: SAMPLE_TOPICS[1].id,
+    questionText: 'When does useEffect run by default?',
+    options: [
+      'Only once on mount',
+      'After every render',
+      'Only on unmount',
+      'Never'
+    ],
+    correctAnswer: 1,
+    difficulty: 'beginner',
+    isApproved: true
+  },
+  // TypeScript Advanced
+  {
+    id: uuidv4(),
+    topicId: SAMPLE_TOPICS[2].id,
+    questionText: 'What are Generics in TypeScript?',
+    options: [
+      'A way to write reusable components that work with multiple types',
+      'A way to delete code',
+      'A way to add comments',
+      'A way to optimize performance'
+    ],
+    correctAnswer: 0,
+    difficulty: 'advanced',
+    isApproved: true
+  },
+  // Web Performance
+  {
+    id: uuidv4(),
+    topicId: SAMPLE_TOPICS[3].id,
+    questionText: 'What is lazy loading?',
+    options: [
+      'Loading resources only when they are needed',
+      'Loading resources very slowly',
+      'Not loading anything',
+      'Loading all resources at once'
+    ],
+    correctAnswer: 0,
+    difficulty: 'intermediate',
+    isApproved: true
+  },
+  // CSS Grid
+  {
+    id: uuidv4(),
+    topicId: SAMPLE_TOPICS[4].id,
+    questionText: 'How do you create a 3x3 grid with CSS Grid?',
+    options: [
+      'grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr);',
+      'grid: 3x3;',
+      'flex: 3x3;',
+      'display: grid-3x3;'
+    ],
+    correctAnswer: 0,
+    difficulty: 'beginner',
+    isApproved: true
+  },
+  {
+    id: uuidv4(),
+    topicId: SAMPLE_TOPICS[0].id,
+    questionText: 'What is the difference between == and === in JavaScript?',
+    options: [
+      '== does type coercion, === checks strict equality',
+      'They are identical',
+      '== is faster than ===',
+      'There is no ===' 
+    ],
+    correctAnswer: 0,
+    difficulty: 'beginner',
+    isApproved: true
+  },
+  {
+    id: uuidv4(),
+    topicId: SAMPLE_TOPICS[1].id,
+    questionText: 'What is the purpose of useContext hook?',
+    options: [
+      'To manage global state without prop drilling',
+      'To fetch data from APIs',
+      'To create CSS styles',
+      'To handle form validation'
+    ],
+    correctAnswer: 0,
+    difficulty: 'intermediate',
+    isApproved: true
+  },
+  {
+    id: uuidv4(),
+    topicId: SAMPLE_TOPICS[3].id,
+    questionText: 'What is code splitting?',
+    options: [
+      'Breaking code into smaller chunks loaded on demand',
+      'Dividing code by number of lines',
+      'Separating HTML and CSS',
+      'None of the above'
+    ],
+    correctAnswer: 0,
+    difficulty: 'intermediate',
+    isApproved: true
+  }
+];
+
+async function seed() {
+  try {
+    console.log('🌱 Starting database seed...');
+
+    // Create topics
+    for (const topic of SAMPLE_TOPICS) {
+      await db.ref(`topics/${topic.id}`).set(topic);
+      console.log(`✅ Created topic: ${topic.topic}`);
+    }
+
+    // Create questions
+    for (const question of SAMPLE_QUESTIONS) {
+      await db.ref(`questions/${question.id}`).set(question);
+      console.log(`✅ Created question: ${question.questionText.substring(0, 40)}...`);
+    }
+
+    // Create sample user
+    const testUserId = uuidv4();
+    const hashedPassword = await bcrypt.hash('password', 10);
+    
+    await db.ref(`users/${testUserId}`).set({
+      id: testUserId,
+      name: 'Student User',
+      email: 'student@example.com',
+      passwordHash: hashedPassword,
+      role: 'student',
+      level: 1,
+      xpTotal: 0,
+      streakDays: 0,
+      createdAt: new Date().toISOString()
+    });
+    
+    console.log('✅ Created test user (email: student@example.com, password: password)');
+
+    console.log('\n✨ Seeding complete!');
+    process.exit(0);
+  } catch (error) {
+    console.error('❌ Seed error:', error);
+    process.exit(1);
+  }
+}
+
+seed();

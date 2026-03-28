@@ -1,0 +1,153 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String         @id @default(uuid())
+  name         String
+  email        String         @unique
+  passwordHash String
+  role         Role           @default(STUDENT)
+  level        Int            @default(1)
+  xpTotal      Int            @default(0)
+  streakDays   Int            @default(0)
+  lastActiveAt DateTime?
+  createdAt    DateTime       @default(now())
+
+  gameSessions  GameSession[]
+  masteryScores MasteryScore[]
+  tests         Test[]
+  studyPlans    StudyPlan[]
+}
+
+enum Role {
+  STUDENT
+  COLLEGE_STUDENT
+  EDUCATOR
+  ADMIN
+}
+
+model Topic {
+  id         String   @id @default(uuid())
+  subject    String
+  topic      String
+  subtopic   String
+  difficulty Int      @default(1)  // 1=easy 2=medium 3=hard
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+
+  questions     Question[]
+  gameSessions  GameSession[]
+  masteryScores MasteryScore[]
+  studyPlans    StudyPlan[]
+}
+
+model Question {
+  id            String       @id @default(uuid())
+  topicId       String
+  topic         Topic        @relation(fields: [topicId], references: [id])
+  questionText  String
+  options       Json         // string[]
+  correctAnswer String
+  explanation   String?
+  difficulty    Int          @default(2)
+  type          QuestionType @default(MCQ)
+  isAiGenerated Boolean      @default(false)
+  isApproved    Boolean      @default(true)
+  createdAt     DateTime     @default(now())
+
+  attempts QuestionAttempt[]
+}
+
+enum QuestionType {
+  MCQ
+  FILL_BLANK
+  MATCH
+  CASE_STUDY
+}
+
+model GameSession {
+  id          String    @id @default(uuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  topicId     String
+  topic       Topic     @relation(fields: [topicId], references: [id])
+  score       Int       @default(0)
+  xpEarned    Int       @default(0)
+  durationSec Int       @default(0)
+  playedAt    DateTime  @default(now())
+
+  attempts QuestionAttempt[]
+}
+
+model QuestionAttempt {
+  id          String      @id @default(uuid())
+  sessionId   String
+  session     GameSession @relation(fields: [sessionId], references: [id])
+  questionId  String
+  question    Question    @relation(fields: [questionId], references: [id])
+  isCorrect   Boolean
+  timeTakenMs Int
+  hintUsed    Boolean     @default(false)
+}
+
+model MasteryScore {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  topicId     String
+  topic       Topic    @relation(fields: [topicId], references: [id])
+  score       Float    @default(0)   // 0–100
+  isWeak      Boolean  @default(false)
+  attempts    Int      @default(0)
+  lastUpdated DateTime @default(now())
+
+  @@unique([userId, topicId])
+}
+
+model Test {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  subject     String
+  totalMarks  Int
+  scoredMarks Int
+  takenAt     DateTime @default(now())
+
+  testQuestions TestQuestion[]
+}
+
+model TestQuestion {
+  id         String  @id @default(uuid())
+  testId     String
+  test       Test    @relation(fields: [testId], references: [id])
+  questionId String
+  subtopic   String
+  isCorrect  Boolean
+  marksAwarded Int   @default(0)
+}
+
+model StudyPlan {
+  id          String        @id @default(uuid())
+  userId      String
+  user        User          @relation(fields: [userId], references: [id])
+  topicId     String
+  topic       Topic         @relation(fields: [topicId], references: [id])
+  priority    Priority      @default(MEDIUM)
+  isCompleted Boolean       @default(false)
+  dueDate     DateTime?
+  createdAt   DateTime      @default(now())
+
+  @@unique([userId, topicId])
+}
+
+enum Priority {
+  HIGH
+  MEDIUM
+  LOW
+}
