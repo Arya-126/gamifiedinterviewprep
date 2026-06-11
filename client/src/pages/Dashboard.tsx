@@ -5,6 +5,7 @@ interface User {
   id: string;
   name: string;
   email: string;
+  role: string;
   level: number;
   xpTotal: number;
   streakDays: number;
@@ -139,6 +140,12 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ user, setCurrentPa
           🎯 Interview Prep
         </button>
         <button
+          onClick={() => setCurrentPage('assessments')}
+          className="bg-gradient-to-r from-rose-500 to-red-600 hover:from-rose-600 hover:to-red-700 text-white font-black text-xl py-6 px-6 rounded-xl shadow-lg transition transform hover:-translate-y-1"
+        >
+          📝 Mock Tests
+        </button>
+        <button
           onClick={() => setCurrentPage('leaderboard')}
           className="bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white font-black text-xl py-6 px-6 rounded-xl shadow-lg transition transform hover:-translate-y-1"
         >
@@ -150,7 +157,36 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ user, setCurrentPa
         >
           🏆 Trophy Room
         </button>
+        <button
+          onClick={() => setCurrentPage('ai-interview')}
+          className="bg-gradient-to-r from-violet-500 to-fuchsia-600 hover:from-violet-600 hover:to-fuchsia-700 text-white font-black text-xl py-6 px-6 rounded-xl shadow-lg transition transform hover:-translate-y-1"
+        >
+          🤖 AI Interview
+        </button>
       </div>
+
+      {(user.role === 'ADMIN' || user.role === 'EDUCATOR') && (
+        <div className="mb-8 grid grid-cols-1 md:grid-cols-3 gap-4">
+          <button
+            onClick={() => setCurrentPage('review-queue')}
+            className="bg-gradient-to-r from-slate-600 to-slate-800 hover:from-slate-700 hover:to-slate-900 text-white font-black text-xl py-4 px-6 rounded-xl shadow-lg transition transform hover:-translate-y-1"
+          >
+            🔍 Question Review Queue (Admin)
+          </button>
+          <button
+            onClick={() => setCurrentPage('test-builder')}
+            className="bg-gradient-to-r from-cyan-600 to-blue-700 hover:from-cyan-700 hover:to-blue-800 text-white font-black text-xl py-4 px-6 rounded-xl shadow-lg transition transform hover:-translate-y-1"
+          >
+            🛠 Test Builder (Admin)
+          </button>
+          <button
+            onClick={() => setCurrentPage('admin-reports')}
+            className="bg-gradient-to-r from-fuchsia-600 to-purple-700 hover:from-fuchsia-700 hover:to-purple-800 text-white font-black text-xl py-4 px-6 rounded-xl shadow-lg transition transform hover:-translate-y-1"
+          >
+            📊 Attempt Reports (Admin)
+          </button>
+        </div>
+      )}
 
       {/* Recent Achievements */}
       <div className="bg-white p-6 rounded-lg shadow-lg">

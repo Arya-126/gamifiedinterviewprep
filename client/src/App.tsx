@@ -26,6 +26,12 @@ import { ConceptTutorial } from './pages/ConceptTutorial';
 import { AchievementsPage } from './pages/AchievementsPage';
 import { AchievementToast } from './components/AchievementToast';
 import { LeaderboardPage } from './pages/Leaderboard';
+import { ReviewQueue } from './pages/ReviewQueue';
+import { AssessmentList } from './pages/AssessmentList';
+import { AssessmentRunner } from './pages/AssessmentRunner';
+import { TestBuilder } from './pages/TestBuilder';
+import { AdminReports } from './pages/AdminReports';
+import { InterviewChat } from './pages/InterviewChat';
 
 interface User {
   id: string;
@@ -56,6 +62,7 @@ const App: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   const [selectedDomainSlug, setSelectedDomainSlug] = useState<string | null>(() => sessionStorage.getItem('selectedDomainSlug'));
+  const [selectedAssessmentId, setSelectedAssessmentId] = useState<string | null>(() => sessionStorage.getItem('selectedAssessmentId'));
   const [selectedInterviewCategorySlug, setSelectedInterviewCategorySlug] = useState<string | null>(() => sessionStorage.getItem('selectedInterviewCategorySlug'));
   const [selectedInterviewTopicId, setSelectedInterviewTopicId] = useState<string | null>(() => sessionStorage.getItem('selectedInterviewTopicId'));
   const [achievementQueue, setAchievementQueue] = useState<any[]>([]);
@@ -72,6 +79,7 @@ const App: React.FC = () => {
     if (selectedTopicName) sessionStorage.setItem('selectedTopicName', selectedTopicName); else sessionStorage.removeItem('selectedTopicName');
     if (selectedGameType) sessionStorage.setItem('selectedGameType', selectedGameType); else sessionStorage.removeItem('selectedGameType');
     if (selectedDomainSlug) sessionStorage.setItem('selectedDomainSlug', selectedDomainSlug); else sessionStorage.removeItem('selectedDomainSlug');
+    if (selectedAssessmentId) sessionStorage.setItem('selectedAssessmentId', selectedAssessmentId); else sessionStorage.removeItem('selectedAssessmentId');
     if (selectedInterviewCategorySlug) sessionStorage.setItem('selectedInterviewCategorySlug', selectedInterviewCategorySlug); else sessionStorage.removeItem('selectedInterviewCategorySlug');
     if (selectedInterviewTopicId) sessionStorage.setItem('selectedInterviewTopicId', selectedInterviewTopicId); else sessionStorage.removeItem('selectedInterviewTopicId');
   }, [currentPage, selectedTopicId, selectedTopicName, selectedGameType, selectedDomainSlug, selectedInterviewCategorySlug, selectedInterviewTopicId]);
@@ -310,6 +318,41 @@ const App: React.FC = () => {
 
         {currentPage === 'achievements' && auth.user && (
           <AchievementsPage onBack={() => setCurrentPage('dashboard')} />
+        )}
+
+        {currentPage === 'review-queue' && auth.user &&
+          (auth.user.role === 'ADMIN' || auth.user.role === 'EDUCATOR') && (
+          <ReviewQueue onBack={() => setCurrentPage('dashboard')} />
+        )}
+
+        {currentPage === 'test-builder' && auth.user &&
+          (auth.user.role === 'ADMIN' || auth.user.role === 'EDUCATOR') && (
+          <TestBuilder onBack={() => setCurrentPage('dashboard')} />
+        )}
+
+        {currentPage === 'assessments' && auth.user && (
+          <AssessmentList
+            onStart={(testId) => { setSelectedAssessmentId(testId); setCurrentPage('assessment-runner'); }}
+            onBack={() => setCurrentPage('dashboard')}
+          />
+        )}
+
+        {currentPage === 'assessment-runner' && auth.user && selectedAssessmentId && (
+          <AssessmentRunner
+            key={selectedAssessmentId}
+            testId={selectedAssessmentId}
+            onExit={() => { setSelectedAssessmentId(null); setCurrentPage('assessments'); }}
+            onPractice={(newTestId) => setSelectedAssessmentId(newTestId)}
+          />
+        )}
+
+        {currentPage === 'admin-reports' && auth.user &&
+          (auth.user.role === 'ADMIN' || auth.user.role === 'EDUCATOR') && (
+          <AdminReports onBack={() => setCurrentPage('dashboard')} />
+        )}
+
+        {currentPage === 'ai-interview' && auth.user && (
+          <InterviewChat onBack={() => setCurrentPage('dashboard')} />
         )}
 
         {currentPage === 'leaderboard' && auth.user && (

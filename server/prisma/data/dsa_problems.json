@@ -1,0 +1,1304 @@
+{
+ "topics": [
+  "Arrays",
+  "Two Pointers",
+  "Binary Search",
+  "Strings",
+  "Linked List",
+  "Recursion & Backtracking",
+  "Stacks & Queues",
+  "Sliding Window",
+  "Heaps",
+  "Greedy",
+  "Trees",
+  "BST",
+  "Graphs",
+  "Dynamic Programming",
+  "Tries",
+  "Bit Manipulation"
+ ],
+ "problems": [
+  {
+   "topicSlug": "arrays",
+   "title": "Maximum Subarray Sum",
+   "slug": "max-subarray-sum",
+   "difficulty": "MEDIUM",
+   "statement": "Given an array of integers (which may include negatives), find the maximum\npossible sum of a non-empty contiguous subarray.\n\n**Input**: first line contains `n`; second line contains `n` space-separated integers.\n**Output**: a single integer — the maximum subarray sum.\n",
+   "constraints": "1 <= n <= 10^5, -10^9 <= a[i] <= 10^9",
+   "sampleIo": [
+    {
+     "input": "5\n1 -2 3 4 -1",
+     "output": "7"
+    },
+    {
+     "input": "4\n-3 -1 -7 -2",
+     "output": "-1"
+    }
+   ],
+   "starterCode": {
+    "python": "# max-subarray-sum — read from stdin, print the answer to stdout\nimport sys\n\ndata = sys.stdin.read().split()\n# TODO: solve\n",
+    "javascript": "// max-subarray-sum — read from stdin, print the answer to stdout\nconst data = require('fs').readFileSync(0, 'utf8').trim().split(/\\s+/);\n// TODO: solve\n",
+    "cpp": "// max-subarray-sum — read from stdin, print the answer to stdout\n#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n    // TODO: solve\n    return 0;\n}\n",
+    "java": "// max-subarray-sum — read from stdin, print the answer to stdout\nimport java.util.*;\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // TODO: solve\n    }\n}\n"
+   },
+   "referenceSolution": {
+    "python": "import sys\ndata = sys.stdin.read().split()\nn = int(data[0]); a = list(map(int, data[1:1+n]))\nbest = cur = a[0]\nfor x in a[1:]:\n    cur = max(x, cur + x)\n    best = max(best, cur)\nprint(best)\n"
+   },
+   "timeLimitMs": 2000,
+   "memoryLimitMb": 256,
+   "source": "Original statement; topic follows the Striver A2Z sheet structure",
+   "sourceUrl": "https://takeuforward.org/strivers-a2z-dsa-course/strivers-a2z-dsa-course-sheet-2/",
+   "cases": [
+    {
+     "input": "5\n1 -2 3 4 -1",
+     "expectedOutput": "7",
+     "isSample": true
+    },
+    {
+     "input": "4\n-3 -1 -7 -2",
+     "expectedOutput": "-1",
+     "isSample": true
+    },
+    {
+     "input": "1\n42",
+     "expectedOutput": "42",
+     "isSample": false
+    },
+    {
+     "input": "8\n2 -1 2 3 4 -5 6 -10",
+     "expectedOutput": "11",
+     "isSample": false
+    },
+    {
+     "input": "12\n-47 44 -15 -19 -22 -33 44 -37 36 44 19 -39",
+     "expectedOutput": "106",
+     "isSample": false
+    },
+    {
+     "input": "32\n-46 -47 -39 -23 -21 14 27 -47 21 -25 41 33 39 19 3 -22 7 25 -15 -50 47 -30 39 4 -7 -15 -31 -23 47 -7 -37 -39",
+     "expectedOutput": "145",
+     "isSample": false
+    },
+    {
+     "input": "29\n-38 -5 -6 27 -17 -45 43 8 18 -35 -2 -40 20 -13 30 29 -4 23 -26 40 -42 -45 34 -21 48 -13 -40 -21 -38",
+     "expectedOutput": "99",
+     "isSample": false
+    },
+    {
+     "input": "29\n-15 8 31 -4 -30 -3 -5 -24 35 -16 39 37 32 -41 27 31 -29 18 43 -19 -30 9 -2 -16 31 38 21 -22 37",
+     "expectedOutput": "223",
+     "isSample": false
+    },
+    {
+     "input": "25\n48 49 -43 -21 -46 -10 1 -16 -42 -23 22 41 -10 -23 33 13 0 32 8 -32 -17 -33 -19 45 21",
+     "expectedOutput": "116",
+     "isSample": false
+    },
+    {
+     "input": "39\n-17 45 24 4 24 1 -4 -22 -33 15 13 -39 46 -44 -36 -31 30 -30 37 4 26 -42 -1 -2 26 9 17 -18 20 -49 37 42 -36 37 18 46 -16 48 32",
+     "expectedOutput": "235",
+     "isSample": false
+    },
+    {
+     "input": "26\n-36 -13 5 -30 8 -50 42 42 -17 14 47 -28 14 -37 30 -12 31 14 27 -25 -31 -3 47 -30 19 49",
+     "expectedOutput": "193",
+     "isSample": false
+    },
+    {
+     "input": "38\n-50 26 -9 12 -48 -36 -4 -11 -20 -43 -20 22 -40 -40 43 12 -42 47 18 48 -34 -34 34 10 20 -29 -17 17 27 4 -23 19 46 43 38 -25 41 -11",
+     "expectedOutput": "263",
+     "isSample": false
+    }
+   ]
+  },
+  {
+   "topicSlug": "two-pointers",
+   "title": "Pair With Target Sum (Sorted Array)",
+   "slug": "pair-with-target-sum",
+   "difficulty": "EASY",
+   "statement": "You are given an array sorted in non-decreasing order and a target value.\nFind two distinct positions whose values add up to the target, using O(1)\nextra space. Print the 1-based indices of the leftmost such pair found by\nthe classic two-pointer scan (one pointer from each end). If no pair sums\nto the target, print `-1 -1`.\n\n**Input**: first line `n target`; second line `n` sorted integers.\n**Output**: two integers — the 1-based indices, or `-1 -1`.\n",
+   "constraints": "2 <= n <= 10^5, -10^9 <= a[i], target <= 10^9",
+   "sampleIo": [
+    {
+     "input": "4 6\n1 2 4 5",
+     "output": "1 4"
+    },
+    {
+     "input": "5 100\n1 2 3 4 5",
+     "output": "-1 -1"
+    }
+   ],
+   "starterCode": {
+    "python": "# pair-with-target-sum — read from stdin, print the answer to stdout\nimport sys\n\ndata = sys.stdin.read().split()\n# TODO: solve\n",
+    "javascript": "// pair-with-target-sum — read from stdin, print the answer to stdout\nconst data = require('fs').readFileSync(0, 'utf8').trim().split(/\\s+/);\n// TODO: solve\n",
+    "cpp": "// pair-with-target-sum — read from stdin, print the answer to stdout\n#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n    // TODO: solve\n    return 0;\n}\n",
+    "java": "// pair-with-target-sum — read from stdin, print the answer to stdout\nimport java.util.*;\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // TODO: solve\n    }\n}\n"
+   },
+   "referenceSolution": {
+    "python": "import sys\ndata = sys.stdin.read().split()\nn, target = int(data[0]), int(data[1])\na = list(map(int, data[2:2+n]))\nl, r = 0, n - 1\nwhile l < r:\n    s = a[l] + a[r]\n    if s == target:\n        print(l + 1, r + 1); break\n    if s < target: l += 1\n    else: r -= 1\nelse:\n    print(-1, -1)\n"
+   },
+   "timeLimitMs": 2000,
+   "memoryLimitMb": 256,
+   "source": "Original statement; topic follows the Striver A2Z sheet structure",
+   "sourceUrl": "https://takeuforward.org/strivers-a2z-dsa-course/strivers-a2z-dsa-course-sheet-2/",
+   "cases": [
+    {
+     "input": "4 6\n1 2 4 5",
+     "expectedOutput": "1 4",
+     "isSample": true
+    },
+    {
+     "input": "5 100\n1 2 3 4 5",
+     "expectedOutput": "-1 -1",
+     "isSample": true
+    },
+    {
+     "input": "2 0\n-5 5",
+     "expectedOutput": "1 2",
+     "isSample": false
+    },
+    {
+     "input": "16 17\n-29 -26 -23 -16 -16 -15 -9 -7 -2 -2 3 5 7 11 12 27",
+     "expectedOutput": "12 15",
+     "isSample": false
+    },
+    {
+     "input": "11 -16\n-30 -28 -27 -26 -26 -16 -9 10 15 25 27",
+     "expectedOutput": "4 8",
+     "isSample": false
+    },
+    {
+     "input": "20 -14\n-24 -22 -18 -17 -15 -15 -13 -4 0 0 1 4 6 6 12 16 20 21 26 29",
+     "expectedOutput": "3 12",
+     "isSample": false
+    },
+    {
+     "input": "25 7\n-27 -27 -24 -24 -22 -18 -18 -15 -9 -8 -5 -4 -3 -3 -2 -1 4 11 11 13 16 16 21 25 25",
+     "expectedOutput": "6 25",
+     "isSample": false
+    },
+    {
+     "input": "9 34\n-26 -15 -13 -2 -1 21 25 25 29",
+     "expectedOutput": "-1 -1",
+     "isSample": false
+    },
+    {
+     "input": "21 4\n-30 -27 -27 -25 -24 -20 -20 -17 -15 -5 -4 0 1 4 11 18 23 24 25 27 29",
+     "expectedOutput": "4 21",
+     "isSample": false
+    },
+    {
+     "input": "4 30\n-14 -6 20 29",
+     "expectedOutput": "-1 -1",
+     "isSample": false
+    },
+    {
+     "input": "18 27\n-27 -27 -21 -18 -17 -12 -12 -3 1 4 5 7 12 14 15 16 17 20",
+     "expectedOutput": "12 18",
+     "isSample": false
+    },
+    {
+     "input": "14 -16\n-27 -27 -27 -25 -20 -19 0 2 2 3 7 24 24 28",
+     "expectedOutput": "6 10",
+     "isSample": false
+    }
+   ]
+  },
+  {
+   "topicSlug": "binary-search",
+   "title": "First and Last Position of a Target",
+   "slug": "first-last-position",
+   "difficulty": "MEDIUM",
+   "statement": "Given an array sorted in non-decreasing order (duplicates allowed) and a\ntarget value, print the 0-based index of the first and last occurrence of\nthe target. If the target is absent, print `-1 -1`. Aim for O(log n).\n\n**Input**: first line `n target`; second line `n` sorted integers.\n**Output**: two integers — first and last index, or `-1 -1`.\n",
+   "constraints": "1 <= n <= 10^5",
+   "sampleIo": [
+    {
+     "input": "6 8\n5 7 7 8 8 10",
+     "output": "3 4"
+    },
+    {
+     "input": "6 6\n5 7 7 8 8 10",
+     "output": "-1 -1"
+    }
+   ],
+   "starterCode": {
+    "python": "# first-last-position — read from stdin, print the answer to stdout\nimport sys\n\ndata = sys.stdin.read().split()\n# TODO: solve\n",
+    "javascript": "// first-last-position — read from stdin, print the answer to stdout\nconst data = require('fs').readFileSync(0, 'utf8').trim().split(/\\s+/);\n// TODO: solve\n",
+    "cpp": "// first-last-position — read from stdin, print the answer to stdout\n#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n    // TODO: solve\n    return 0;\n}\n",
+    "java": "// first-last-position — read from stdin, print the answer to stdout\nimport java.util.*;\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // TODO: solve\n    }\n}\n"
+   },
+   "referenceSolution": {
+    "python": "import sys\nfrom bisect import bisect_left, bisect_right\ndata = sys.stdin.read().split()\nn, target = int(data[0]), int(data[1])\na = list(map(int, data[2:2+n]))\nlo = bisect_left(a, target)\nif lo == n or a[lo] != target:\n    print(-1, -1)\nelse:\n    print(lo, bisect_right(a, target) - 1)\n"
+   },
+   "timeLimitMs": 2000,
+   "memoryLimitMb": 256,
+   "source": "Original statement; topic follows the Striver A2Z sheet structure",
+   "sourceUrl": "https://takeuforward.org/strivers-a2z-dsa-course/strivers-a2z-dsa-course-sheet-2/",
+   "cases": [
+    {
+     "input": "6 8\n5 7 7 8 8 10",
+     "expectedOutput": "3 4",
+     "isSample": true
+    },
+    {
+     "input": "6 6\n5 7 7 8 8 10",
+     "expectedOutput": "-1 -1",
+     "isSample": true
+    },
+    {
+     "input": "1 1\n1",
+     "expectedOutput": "0 0",
+     "isSample": false
+    },
+    {
+     "input": "9 6\n1 2 3 7 7 8 10 12 13",
+     "expectedOutput": "-1 -1",
+     "isSample": false
+    },
+    {
+     "input": "25 3\n0 0 2 2 2 3 4 4 5 6 7 7 8 8 9 9 9 9 10 11 11 12 14 14 14",
+     "expectedOutput": "5 5",
+     "isSample": false
+    },
+    {
+     "input": "13 2\n1 3 3 4 6 6 8 8 8 8 9 10 15",
+     "expectedOutput": "-1 -1",
+     "isSample": false
+    },
+    {
+     "input": "32 13\n0 0 1 1 1 1 2 3 3 4 4 4 4 4 5 5 5 6 7 7 8 8 9 10 11 11 11 11 13 13 13 14",
+     "expectedOutput": "28 30",
+     "isSample": false
+    },
+    {
+     "input": "6 3\n5 5 7 8 10 13",
+     "expectedOutput": "-1 -1",
+     "isSample": false
+    },
+    {
+     "input": "29 13\n0 0 1 1 2 3 3 5 6 6 7 7 7 8 8 8 8 9 10 10 10 11 11 11 12 12 13 14 15",
+     "expectedOutput": "26 26",
+     "isSample": false
+    },
+    {
+     "input": "37 15\n0 0 1 2 3 3 4 5 6 6 6 6 6 8 9 9 9 9 9 9 10 10 10 10 11 12 12 12 12 13 13 13 13 13 14 14 14",
+     "expectedOutput": "-1 -1",
+     "isSample": false
+    },
+    {
+     "input": "15 13\n0 1 2 2 2 4 6 7 7 7 9 9 10 14 15",
+     "expectedOutput": "-1 -1",
+     "isSample": false
+    },
+    {
+     "input": "17 10\n0 1 3 3 4 4 5 7 7 7 12 12 13 14 14 14 15",
+     "expectedOutput": "-1 -1",
+     "isSample": false
+    }
+   ]
+  },
+  {
+   "topicSlug": "strings",
+   "title": "Valid Anagram",
+   "slug": "valid-anagram",
+   "difficulty": "EASY",
+   "statement": "Two lowercase strings are anagrams when one can be formed by rearranging\nthe letters of the other, using every letter exactly once. Decide whether\nthe given pair is an anagram pair.\n\n**Input**: two lines, strings `s` and `t`.\n**Output**: `true` or `false`.\n",
+   "constraints": "1 <= |s|, |t| <= 10^5, lowercase a-z",
+   "sampleIo": [
+    {
+     "input": "anagram\nnagaram",
+     "output": "true"
+    },
+    {
+     "input": "rat\ncar",
+     "output": "false"
+    }
+   ],
+   "starterCode": {
+    "python": "# valid-anagram — read from stdin, print the answer to stdout\nimport sys\n\ndata = sys.stdin.read().split()\n# TODO: solve\n",
+    "javascript": "// valid-anagram — read from stdin, print the answer to stdout\nconst data = require('fs').readFileSync(0, 'utf8').trim().split(/\\s+/);\n// TODO: solve\n",
+    "cpp": "// valid-anagram — read from stdin, print the answer to stdout\n#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n    // TODO: solve\n    return 0;\n}\n",
+    "java": "// valid-anagram — read from stdin, print the answer to stdout\nimport java.util.*;\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // TODO: solve\n    }\n}\n"
+   },
+   "referenceSolution": {
+    "python": "import sys\ns, t = sys.stdin.read().split()\nprint(\"true\" if sorted(s) == sorted(t) else \"false\")\n"
+   },
+   "timeLimitMs": 2000,
+   "memoryLimitMb": 256,
+   "source": "Original statement; topic follows the Striver A2Z sheet structure",
+   "sourceUrl": "https://takeuforward.org/strivers-a2z-dsa-course/strivers-a2z-dsa-course-sheet-2/",
+   "cases": [
+    {
+     "input": "anagram\nnagaram",
+     "expectedOutput": "true",
+     "isSample": true
+    },
+    {
+     "input": "rat\ncar",
+     "expectedOutput": "false",
+     "isSample": true
+    },
+    {
+     "input": "a\na",
+     "expectedOutput": "true",
+     "isSample": false
+    },
+    {
+     "input": "ab\nabb",
+     "expectedOutput": "false",
+     "isSample": false
+    },
+    {
+     "input": "eededbddcb\ndcdbedeedb",
+     "expectedOutput": "true",
+     "isSample": false
+    },
+    {
+     "input": "cceabbb\nabcbcbe",
+     "expectedOutput": "true",
+     "isSample": false
+    },
+    {
+     "input": "eddabdde\nedbadedd",
+     "expectedOutput": "true",
+     "isSample": false
+    },
+    {
+     "input": "deeebdbcd\ncdeebebdd",
+     "expectedOutput": "true",
+     "isSample": false
+    },
+    {
+     "input": "bcccaa\ncbabaa",
+     "expectedOutput": "false",
+     "isSample": false
+    },
+    {
+     "input": "bbbabb\nbbbbba",
+     "expectedOutput": "true",
+     "isSample": false
+    },
+    {
+     "input": "baccab\nacacaa",
+     "expectedOutput": "false",
+     "isSample": false
+    },
+    {
+     "input": "aaacaa\nabcaca",
+     "expectedOutput": "false",
+     "isSample": false
+    }
+   ]
+  },
+  {
+   "topicSlug": "linked-list",
+   "title": "Reverse Nodes in K-Sized Groups",
+   "slug": "reverse-k-group",
+   "difficulty": "MEDIUM",
+   "statement": "A singly linked list is given as a sequence of values. Reverse the nodes\nof the list k at a time: every complete group of k consecutive nodes is\nreversed in place; a final group with fewer than k nodes is left as-is.\nPrint the resulting sequence.\n\n**Input**: first line `n k`; second line `n` integers (the list, head first).\n**Output**: the transformed list, space-separated.\n",
+   "constraints": "1 <= k <= n <= 10^5",
+   "sampleIo": [
+    {
+     "input": "5 2\n1 2 3 4 5",
+     "output": "2 1 4 3 5"
+    },
+    {
+     "input": "5 3\n1 2 3 4 5",
+     "output": "3 2 1 4 5"
+    }
+   ],
+   "starterCode": {
+    "python": "# reverse-k-group — read from stdin, print the answer to stdout\nimport sys\n\ndata = sys.stdin.read().split()\n# TODO: solve\n",
+    "javascript": "// reverse-k-group — read from stdin, print the answer to stdout\nconst data = require('fs').readFileSync(0, 'utf8').trim().split(/\\s+/);\n// TODO: solve\n",
+    "cpp": "// reverse-k-group — read from stdin, print the answer to stdout\n#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n    // TODO: solve\n    return 0;\n}\n",
+    "java": "// reverse-k-group — read from stdin, print the answer to stdout\nimport java.util.*;\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // TODO: solve\n    }\n}\n"
+   },
+   "referenceSolution": {
+    "python": "import sys\ndata = sys.stdin.read().split()\nn, k = int(data[0]), int(data[1])\na = data[2:2+n]\nout = []\ni = 0\nwhile i + k <= n:\n    out.extend(reversed(a[i:i+k])); i += k\nout.extend(a[i:])\nprint(\" \".join(out))\n"
+   },
+   "timeLimitMs": 2000,
+   "memoryLimitMb": 256,
+   "source": "Original statement; topic follows the Striver A2Z sheet structure",
+   "sourceUrl": "https://takeuforward.org/strivers-a2z-dsa-course/strivers-a2z-dsa-course-sheet-2/",
+   "cases": [
+    {
+     "input": "5 2\n1 2 3 4 5",
+     "expectedOutput": "2 1 4 3 5",
+     "isSample": true
+    },
+    {
+     "input": "5 3\n1 2 3 4 5",
+     "expectedOutput": "3 2 1 4 5",
+     "isSample": true
+    },
+    {
+     "input": "4 1\n9 8 7 6",
+     "expectedOutput": "9 8 7 6",
+     "isSample": false
+    },
+    {
+     "input": "3 3\n1 2 3",
+     "expectedOutput": "3 2 1",
+     "isSample": false
+    },
+    {
+     "input": "16 10\n89 32 98 47 21 77 77 95 91 14 99 20 39 13 74 3",
+     "expectedOutput": "14 91 95 77 77 21 47 98 32 89 99 20 39 13 74 3",
+     "isSample": false
+    },
+    {
+     "input": "20 18\n86 48 50 91 25 9 75 88 80 31 13 89 98 38 87 76 15 72 5 44",
+     "expectedOutput": "72 15 76 87 38 98 89 13 31 80 88 75 9 25 91 50 48 86 5 44",
+     "isSample": false
+    },
+    {
+     "input": "15 3\n84 47 8 64 82 43 1 53 62 13 55 46 81 58 90",
+     "expectedOutput": "8 47 84 43 82 64 62 53 1 46 55 13 90 58 81",
+     "isSample": false
+    },
+    {
+     "input": "15 14\n22 93 66 83 34 78 68 99 61 59 55 93 75 34 41",
+     "expectedOutput": "34 75 93 55 59 61 99 68 78 34 83 66 93 22 41",
+     "isSample": false
+    },
+    {
+     "input": "9 7\n11 35 57 31 96 59 72 78 85",
+     "expectedOutput": "72 59 96 31 57 35 11 78 85",
+     "isSample": false
+    },
+    {
+     "input": "12 5\n3 63 41 23 62 27 45 33 43 35 76 89",
+     "expectedOutput": "62 23 41 63 3 35 43 33 45 27 76 89",
+     "isSample": false
+    },
+    {
+     "input": "19 10\n1 66 24 10 30 92 52 62 71 97 30 88 60 82 91 62 57 2 11",
+     "expectedOutput": "97 71 62 52 92 30 10 24 66 1 30 88 60 82 91 62 57 2 11",
+     "isSample": false
+    },
+    {
+     "input": "9 9\n51 88 31 39 84 74 47 60 70",
+     "expectedOutput": "70 60 47 74 84 39 31 88 51",
+     "isSample": false
+    }
+   ]
+  },
+  {
+   "topicSlug": "recursion-backtracking",
+   "title": "Counting N-Queens Arrangements",
+   "slug": "n-queens-count",
+   "difficulty": "HARD",
+   "statement": "On an n x n chessboard, count the number of ways to place n queens so\nthat no two queens attack each other (no shared row, column, or diagonal).\n\n**Input**: a single integer `n`.\n**Output**: the number of distinct valid arrangements.\n",
+   "constraints": "1 <= n <= 10",
+   "sampleIo": [
+    {
+     "input": "4",
+     "output": "2"
+    },
+    {
+     "input": "1",
+     "output": "1"
+    }
+   ],
+   "starterCode": {
+    "python": "# n-queens-count — read from stdin, print the answer to stdout\nimport sys\n\ndata = sys.stdin.read().split()\n# TODO: solve\n",
+    "javascript": "// n-queens-count — read from stdin, print the answer to stdout\nconst data = require('fs').readFileSync(0, 'utf8').trim().split(/\\s+/);\n// TODO: solve\n",
+    "cpp": "// n-queens-count — read from stdin, print the answer to stdout\n#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n    // TODO: solve\n    return 0;\n}\n",
+    "java": "// n-queens-count — read from stdin, print the answer to stdout\nimport java.util.*;\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // TODO: solve\n    }\n}\n"
+   },
+   "referenceSolution": {
+    "python": "import sys\nn = int(sys.stdin.read().split()[0])\ncount = 0\ndef place(row, cols, d1, d2):\n    global count\n    if row == n:\n        count += 1; return\n    for c in range(n):\n        if cols & (1 << c) or d1 & (1 << (row + c)) or d2 & (1 << (row - c + n)):\n            continue\n        place(row + 1, cols | (1 << c), d1 | (1 << (row + c)), d2 | (1 << (row - c + n)))\nplace(0, 0, 0, 0)\nprint(count)\n"
+   },
+   "timeLimitMs": 2000,
+   "memoryLimitMb": 256,
+   "source": "Original statement; topic follows the Striver A2Z sheet structure",
+   "sourceUrl": "https://takeuforward.org/strivers-a2z-dsa-course/strivers-a2z-dsa-course-sheet-2/",
+   "cases": [
+    {
+     "input": "4",
+     "expectedOutput": "2",
+     "isSample": true
+    },
+    {
+     "input": "1",
+     "expectedOutput": "1",
+     "isSample": true
+    },
+    {
+     "input": "2",
+     "expectedOutput": "0",
+     "isSample": false
+    },
+    {
+     "input": "3",
+     "expectedOutput": "0",
+     "isSample": false
+    },
+    {
+     "input": "5",
+     "expectedOutput": "10",
+     "isSample": false
+    },
+    {
+     "input": "6",
+     "expectedOutput": "4",
+     "isSample": false
+    },
+    {
+     "input": "7",
+     "expectedOutput": "40",
+     "isSample": false
+    },
+    {
+     "input": "8",
+     "expectedOutput": "92",
+     "isSample": false
+    },
+    {
+     "input": "9",
+     "expectedOutput": "352",
+     "isSample": false
+    },
+    {
+     "input": "10",
+     "expectedOutput": "724",
+     "isSample": false
+    }
+   ]
+  },
+  {
+   "topicSlug": "stacks-queues",
+   "title": "Balanced Bracket Sequence",
+   "slug": "valid-parentheses",
+   "difficulty": "EASY",
+   "statement": "A string consists only of the characters `()[]{}`. It is balanced when\nevery opening bracket is closed by the matching bracket type in the\ncorrect order. Decide whether the string is balanced.\n\n**Input**: one line — the bracket string.\n**Output**: `true` or `false`.\n",
+   "constraints": "1 <= |s| <= 10^5",
+   "sampleIo": [
+    {
+     "input": "()[]{}",
+     "output": "true"
+    },
+    {
+     "input": "(]",
+     "output": "false"
+    }
+   ],
+   "starterCode": {
+    "python": "# valid-parentheses — read from stdin, print the answer to stdout\nimport sys\n\ndata = sys.stdin.read().split()\n# TODO: solve\n",
+    "javascript": "// valid-parentheses — read from stdin, print the answer to stdout\nconst data = require('fs').readFileSync(0, 'utf8').trim().split(/\\s+/);\n// TODO: solve\n",
+    "cpp": "// valid-parentheses — read from stdin, print the answer to stdout\n#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n    // TODO: solve\n    return 0;\n}\n",
+    "java": "// valid-parentheses — read from stdin, print the answer to stdout\nimport java.util.*;\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // TODO: solve\n    }\n}\n"
+   },
+   "referenceSolution": {
+    "python": "import sys\ns = sys.stdin.read().strip()\npairs = {')': '(', ']': '[', '}': '{'}\nst = []\nok = True\nfor ch in s:\n    if ch in '([{':\n        st.append(ch)\n    elif not st or st.pop() != pairs.get(ch):\n        ok = False; break\nprint(\"true\" if ok and not st else \"false\")\n"
+   },
+   "timeLimitMs": 2000,
+   "memoryLimitMb": 256,
+   "source": "Original statement; topic follows the Striver A2Z sheet structure",
+   "sourceUrl": "https://takeuforward.org/strivers-a2z-dsa-course/strivers-a2z-dsa-course-sheet-2/",
+   "cases": [
+    {
+     "input": "()[]{}",
+     "expectedOutput": "true",
+     "isSample": true
+    },
+    {
+     "input": "(]",
+     "expectedOutput": "false",
+     "isSample": true
+    },
+    {
+     "input": "([{}])",
+     "expectedOutput": "true",
+     "isSample": false
+    },
+    {
+     "input": "(((",
+     "expectedOutput": "false",
+     "isSample": false
+    },
+    {
+     "input": "()(",
+     "expectedOutput": "false",
+     "isSample": false
+    },
+    {
+     "input": "{[()()]}[]",
+     "expectedOutput": "true",
+     "isSample": false
+    },
+    {
+     "input": "][",
+     "expectedOutput": "false",
+     "isSample": false
+    },
+    {
+     "input": "(",
+     "expectedOutput": "false",
+     "isSample": false
+    },
+    {
+     "input": "{[(])}",
+     "expectedOutput": "false",
+     "isSample": false
+    },
+    {
+     "input": "()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()()",
+     "expectedOutput": "true",
+     "isSample": false
+    }
+   ]
+  },
+  {
+   "topicSlug": "sliding-window",
+   "title": "Longest Substring Without Repeats",
+   "slug": "longest-unique-substring",
+   "difficulty": "MEDIUM",
+   "statement": "Find the length of the longest contiguous substring of the given string\nthat contains no repeated characters.\n\n**Input**: one line — a lowercase string.\n**Output**: a single integer — the maximum length.\n",
+   "constraints": "1 <= |s| <= 10^5",
+   "sampleIo": [
+    {
+     "input": "abcabcbb",
+     "output": "3"
+    },
+    {
+     "input": "bbbbb",
+     "output": "1"
+    }
+   ],
+   "starterCode": {
+    "python": "# longest-unique-substring — read from stdin, print the answer to stdout\nimport sys\n\ndata = sys.stdin.read().split()\n# TODO: solve\n",
+    "javascript": "// longest-unique-substring — read from stdin, print the answer to stdout\nconst data = require('fs').readFileSync(0, 'utf8').trim().split(/\\s+/);\n// TODO: solve\n",
+    "cpp": "// longest-unique-substring — read from stdin, print the answer to stdout\n#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n    // TODO: solve\n    return 0;\n}\n",
+    "java": "// longest-unique-substring — read from stdin, print the answer to stdout\nimport java.util.*;\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // TODO: solve\n    }\n}\n"
+   },
+   "referenceSolution": {
+    "python": "import sys\ns = sys.stdin.read().strip()\nlast = {}\nbest = start = 0\nfor i, ch in enumerate(s):\n    if ch in last and last[ch] >= start:\n        start = last[ch] + 1\n    last[ch] = i\n    best = max(best, i - start + 1)\nprint(best)\n"
+   },
+   "timeLimitMs": 2000,
+   "memoryLimitMb": 256,
+   "source": "Original statement; topic follows the Striver A2Z sheet structure",
+   "sourceUrl": "https://takeuforward.org/strivers-a2z-dsa-course/strivers-a2z-dsa-course-sheet-2/",
+   "cases": [
+    {
+     "input": "abcabcbb",
+     "expectedOutput": "3",
+     "isSample": true
+    },
+    {
+     "input": "bbbbb",
+     "expectedOutput": "1",
+     "isSample": true
+    },
+    {
+     "input": "pwwkew",
+     "expectedOutput": "3",
+     "isSample": false
+    },
+    {
+     "input": "abcdef",
+     "expectedOutput": "6",
+     "isSample": false
+    },
+    {
+     "input": "dfeccfdcccbafbcafegfbbbfdcf",
+     "expectedOutput": "6",
+     "isSample": false
+    },
+    {
+     "input": "geecagbcbcbcafebcaaecfbfggdagaecdddcbacgda",
+     "expectedOutput": "5",
+     "isSample": false
+    },
+    {
+     "input": "addaeffabbgecabaegdeegebgedddcgedceeaefagbfbcfabbbeabaddf",
+     "expectedOutput": "5",
+     "isSample": false
+    },
+    {
+     "input": "dcabcfcfgdafbcggfefgbdaebfbcgbaabgcefgecdad",
+     "expectedOutput": "6",
+     "isSample": false
+    },
+    {
+     "input": "cfdceeddaeadfcecaabfggeeagfgceaggbdefdcbedfgdadcd",
+     "expectedOutput": "6",
+     "isSample": false
+    },
+    {
+     "input": "cfagbcdfdcfdggeadacccagdge",
+     "expectedOutput": "6",
+     "isSample": false
+    },
+    {
+     "input": "afgeddabecegdfdgabcebcdfdaafegbfbceaedabgadafgbdfcefcdgdd",
+     "expectedOutput": "7",
+     "isSample": false
+    },
+    {
+     "input": "debdbeefbgacgggdcgec",
+     "expectedOutput": "6",
+     "isSample": false
+    }
+   ]
+  },
+  {
+   "topicSlug": "heaps",
+   "title": "K-th Largest Element",
+   "slug": "kth-largest",
+   "difficulty": "EASY",
+   "statement": "Given an unsorted array, output the k-th largest element (by sorted\norder, not the k-th distinct value). A heap of size k gives O(n log k).\n\n**Input**: first line `n k`; second line `n` integers.\n**Output**: the k-th largest value.\n",
+   "constraints": "1 <= k <= n <= 10^5",
+   "sampleIo": [
+    {
+     "input": "6 2\n3 2 1 5 6 4",
+     "output": "5"
+    },
+    {
+     "input": "9 4\n3 2 3 1 2 4 5 5 6",
+     "output": "4"
+    }
+   ],
+   "starterCode": {
+    "python": "# kth-largest — read from stdin, print the answer to stdout\nimport sys\n\ndata = sys.stdin.read().split()\n# TODO: solve\n",
+    "javascript": "// kth-largest — read from stdin, print the answer to stdout\nconst data = require('fs').readFileSync(0, 'utf8').trim().split(/\\s+/);\n// TODO: solve\n",
+    "cpp": "// kth-largest — read from stdin, print the answer to stdout\n#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n    // TODO: solve\n    return 0;\n}\n",
+    "java": "// kth-largest — read from stdin, print the answer to stdout\nimport java.util.*;\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // TODO: solve\n    }\n}\n"
+   },
+   "referenceSolution": {
+    "python": "import sys, heapq\ndata = sys.stdin.read().split()\nn, k = int(data[0]), int(data[1])\na = list(map(int, data[2:2+n]))\nprint(heapq.nlargest(k, a)[-1])\n"
+   },
+   "timeLimitMs": 2000,
+   "memoryLimitMb": 256,
+   "source": "Original statement; topic follows the Striver A2Z sheet structure",
+   "sourceUrl": "https://takeuforward.org/strivers-a2z-dsa-course/strivers-a2z-dsa-course-sheet-2/",
+   "cases": [
+    {
+     "input": "6 2\n3 2 1 5 6 4",
+     "expectedOutput": "5",
+     "isSample": true
+    },
+    {
+     "input": "9 4\n3 2 3 1 2 4 5 5 6",
+     "expectedOutput": "4",
+     "isSample": true
+    },
+    {
+     "input": "1 1\n7",
+     "expectedOutput": "7",
+     "isSample": false
+    },
+    {
+     "input": "3 3\n-28 85 -24",
+     "expectedOutput": "-28",
+     "isSample": false
+    },
+    {
+     "input": "40 7\n68 25 -62 14 37 23 -12 -15 41 95 39 -4 16 -18 -52 78 -39 46 -2 -41 98 5 -89 -19 90 21 80 -3 -2 69 66 -62 26 -91 -68 28 51 -16 -75 12",
+     "expectedOutput": "68",
+     "isSample": false
+    },
+    {
+     "input": "36 6\n16 -97 84 -64 4 67 -61 -81 20 100 -33 -14 59 77 1 66 -80 -16 72 36 -3 -19 60 83 94 24 38 -91 58 -83 -40 61 75 -27 -42 91",
+     "expectedOutput": "77",
+     "isSample": false
+    },
+    {
+     "input": "30 22\n-75 94 62 80 -75 13 -58 77 -24 -93 -89 -17 -86 -25 -9 -5 10 -63 -38 35 5 44 74 -54 -57 -56 -80 56 -3 58",
+     "expectedOutput": "-57",
+     "isSample": false
+    },
+    {
+     "input": "18 12\n27 49 -64 -41 18 63 -35 17 -35 70 -98 19 -27 73 39 -60 -82 13",
+     "expectedOutput": "-35",
+     "isSample": false
+    },
+    {
+     "input": "40 40\n-24 63 8 76 -36 16 -23 -50 -2 23 -73 -40 -3 46 -9 47 -25 79 -25 -95 68 1 -30 -98 44 75 99 90 -88 55 90 27 -27 98 -42 55 -10 -44 62 -52",
+     "expectedOutput": "-98",
+     "isSample": false
+    },
+    {
+     "input": "19 3\n73 93 84 96 68 74 -65 60 -76 60 65 -90 -21 12 -92 48 -7 87 -67",
+     "expectedOutput": "87",
+     "isSample": false
+    },
+    {
+     "input": "21 8\n-17 91 6 -56 -49 -67 38 -7 35 28 -31 -58 -35 23 -25 91 -14 -71 19 -81 -64",
+     "expectedOutput": "6",
+     "isSample": false
+    },
+    {
+     "input": "28 21\n42 -7 -77 1 -97 -33 37 -69 16 -6 72 91 72 -33 49 -3 63 -5 -73 72 -41 20 -94 58 43 -17 56 -44",
+     "expectedOutput": "-33",
+     "isSample": false
+    }
+   ]
+  },
+  {
+   "topicSlug": "greedy",
+   "title": "Maximum Non-Overlapping Meetings",
+   "slug": "max-meetings",
+   "difficulty": "MEDIUM",
+   "statement": "One meeting room is available. Each meeting has a start and end time.\nA meeting can be scheduled only if it starts strictly after the\npreviously scheduled meeting ends. Maximize the number of meetings held.\n\n**Input**: first line `n`; then `n` lines each with `start end`.\n**Output**: the maximum number of meetings.\n",
+   "constraints": "1 <= n <= 10^5, 0 <= start < end <= 10^9",
+   "sampleIo": [
+    {
+     "input": "6\n1 2\n3 4\n0 6\n5 7\n8 9\n5 9",
+     "output": "4"
+    },
+    {
+     "input": "3\n1 10\n2 3\n4 5",
+     "output": "2"
+    }
+   ],
+   "starterCode": {
+    "python": "# max-meetings — read from stdin, print the answer to stdout\nimport sys\n\ndata = sys.stdin.read().split()\n# TODO: solve\n",
+    "javascript": "// max-meetings — read from stdin, print the answer to stdout\nconst data = require('fs').readFileSync(0, 'utf8').trim().split(/\\s+/);\n// TODO: solve\n",
+    "cpp": "// max-meetings — read from stdin, print the answer to stdout\n#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n    // TODO: solve\n    return 0;\n}\n",
+    "java": "// max-meetings — read from stdin, print the answer to stdout\nimport java.util.*;\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // TODO: solve\n    }\n}\n"
+   },
+   "referenceSolution": {
+    "python": "import sys\ndata = sys.stdin.read().split()\nn = int(data[0])\nms = []\nfor i in range(n):\n    s, e = int(data[1 + 2*i]), int(data[2 + 2*i])\n    ms.append((e, s))\nms.sort()\ncount, last_end = 0, -1\nfor e, s in ms:\n    if s > last_end:\n        count += 1; last_end = e\nprint(count)\n"
+   },
+   "timeLimitMs": 2000,
+   "memoryLimitMb": 256,
+   "source": "Original statement; topic follows the Striver A2Z sheet structure",
+   "sourceUrl": "https://takeuforward.org/strivers-a2z-dsa-course/strivers-a2z-dsa-course-sheet-2/",
+   "cases": [
+    {
+     "input": "6\n1 2\n3 4\n0 6\n5 7\n8 9\n5 9",
+     "expectedOutput": "4",
+     "isSample": true
+    },
+    {
+     "input": "3\n1 10\n2 3\n4 5",
+     "expectedOutput": "2",
+     "isSample": true
+    },
+    {
+     "input": "1\n0 1",
+     "expectedOutput": "1",
+     "isSample": false
+    },
+    {
+     "input": "4\n40 48\n44 49\n41 48\n7 10",
+     "expectedOutput": "2",
+     "isSample": false
+    },
+    {
+     "input": "3\n2 7\n31 33\n6 10",
+     "expectedOutput": "2",
+     "isSample": false
+    },
+    {
+     "input": "19\n8 15\n29 35\n42 51\n26 36\n47 50\n26 28\n31 41\n26 31\n2 8\n13 21\n28 32\n23 25\n43 49\n34 40\n3 10\n17 21\n7 15\n5 9\n41 51",
+     "expectedOutput": "6",
+     "isSample": false
+    },
+    {
+     "input": "2\n3 9\n15 18",
+     "expectedOutput": "2",
+     "isSample": false
+    },
+    {
+     "input": "20\n13 15\n48 57\n13 23\n13 17\n21 24\n50 60\n0 5\n9 12\n34 39\n11 13\n42 43\n8 9\n22 26\n37 43\n1 4\n16 17\n8 15\n33 35\n47 49\n30 38",
+     "expectedOutput": "9",
+     "isSample": false
+    },
+    {
+     "input": "13\n32 42\n6 14\n32 36\n39 40\n46 55\n19 27\n41 42\n3 11\n25 32\n43 45\n31 39\n4 6\n20 30",
+     "expectedOutput": "7",
+     "isSample": false
+    },
+    {
+     "input": "6\n4 7\n17 27\n40 50\n35 41\n24 34\n33 38",
+     "expectedOutput": "4",
+     "isSample": false
+    },
+    {
+     "input": "16\n32 42\n27 29\n50 52\n41 50\n46 50\n27 35\n14 21\n21 29\n25 32\n46 48\n20 27\n20 25\n23 26\n43 51\n4 6\n5 7",
+     "expectedOutput": "7",
+     "isSample": false
+    },
+    {
+     "input": "15\n6 12\n8 17\n3 13\n35 44\n21 23\n26 32\n42 49\n46 47\n18 28\n19 25\n6 16\n32 36\n9 17\n14 16\n22 31",
+     "expectedOutput": "6",
+     "isSample": false
+    }
+   ]
+  },
+  {
+   "topicSlug": "bst",
+   "title": "Lowest Common Ancestor in a BST",
+   "slug": "bst-lowest-common-ancestor",
+   "difficulty": "MEDIUM",
+   "statement": "A binary search tree is built by inserting the given distinct values one\nby one, in order, using standard BST insertion (smaller to the left,\nlarger to the right). For two values `a` and `b` that are guaranteed to\nbe in the tree, print the value of their lowest common ancestor.\n\n**Input**: first line `n`; second line `n` distinct integers (insertion\norder); third line `a b`.\n**Output**: the LCA node's value.\n",
+   "constraints": "2 <= n <= 10^4",
+   "sampleIo": [
+    {
+     "input": "7\n6 2 8 0 4 7 9\n2 8",
+     "output": "6"
+    },
+    {
+     "input": "7\n6 2 8 0 4 7 9\n2 4",
+     "output": "2"
+    }
+   ],
+   "starterCode": {
+    "python": "# bst-lowest-common-ancestor — read from stdin, print the answer to stdout\nimport sys\n\ndata = sys.stdin.read().split()\n# TODO: solve\n",
+    "javascript": "// bst-lowest-common-ancestor — read from stdin, print the answer to stdout\nconst data = require('fs').readFileSync(0, 'utf8').trim().split(/\\s+/);\n// TODO: solve\n",
+    "cpp": "// bst-lowest-common-ancestor — read from stdin, print the answer to stdout\n#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n    // TODO: solve\n    return 0;\n}\n",
+    "java": "// bst-lowest-common-ancestor — read from stdin, print the answer to stdout\nimport java.util.*;\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // TODO: solve\n    }\n}\n"
+   },
+   "referenceSolution": {
+    "python": "import sys\ndata = sys.stdin.read().split()\nn = int(data[0])\nvals = list(map(int, data[1:1+n]))\na, b = int(data[1+n]), int(data[2+n])\nleft, right, root = {}, {}, vals[0]\nfor v in vals[1:]:\n    cur = root\n    while True:\n        if v < cur:\n            if cur in left: cur = left[cur]\n            else: left[cur] = v; break\n        else:\n            if cur in right: cur = right[cur]\n            else: right[cur] = v; break\nlo, hi = min(a, b), max(a, b)\ncur = root\nwhile not (lo <= cur <= hi):\n    cur = left[cur] if cur > hi else right[cur]\nprint(cur)\n"
+   },
+   "timeLimitMs": 2000,
+   "memoryLimitMb": 256,
+   "source": "Original statement; topic follows the Striver A2Z sheet structure",
+   "sourceUrl": "https://takeuforward.org/strivers-a2z-dsa-course/strivers-a2z-dsa-course-sheet-2/",
+   "cases": [
+    {
+     "input": "7\n6 2 8 0 4 7 9\n2 8",
+     "expectedOutput": "6",
+     "isSample": true
+    },
+    {
+     "input": "7\n6 2 8 0 4 7 9\n2 4",
+     "expectedOutput": "2",
+     "isSample": true
+    },
+    {
+     "input": "2\n5 3\n3 5",
+     "expectedOutput": "5",
+     "isSample": false
+    },
+    {
+     "input": "15\n29 195 71 146 57 109 143 196 159 157 172 164 142 6 155\n155 172",
+     "expectedOutput": "159",
+     "isSample": false
+    },
+    {
+     "input": "30\n177 68 7 46 69 179 79 86 89 1 196 36 144 168 102 17 188 162 197 23 135 55 96 107 116 87 40 94 193 83\n116 197",
+     "expectedOutput": "177",
+     "isSample": false
+    },
+    {
+     "input": "23\n21 13 39 40 193 158 12 172 20 69 113 169 108 124 155 189 106 190 55 131 29 88 110\n40 69",
+     "expectedOutput": "40",
+     "isSample": false
+    },
+    {
+     "input": "25\n173 151 124 134 170 78 11 56 101 153 14 1 52 77 54 35 65 74 83 30 188 127 110 44 33\n52 74",
+     "expectedOutput": "56",
+     "isSample": false
+    },
+    {
+     "input": "26\n58 128 143 171 90 18 101 189 10 111 4 117 19 80 147 109 146 103 181 163 106 74 29 182 5 83\n18 83",
+     "expectedOutput": "58",
+     "isSample": false
+    },
+    {
+     "input": "23\n117 176 92 22 111 27 62 195 150 102 134 20 101 79 86 56 85 43 19 130 162 29 135\n85 62",
+     "expectedOutput": "62",
+     "isSample": false
+    },
+    {
+     "input": "28\n89 199 186 165 37 60 26 195 65 50 44 154 39 167 19 45 160 126 118 144 148 114 174 180 164 162 159 82\n82 148",
+     "expectedOutput": "89",
+     "isSample": false
+    },
+    {
+     "input": "14\n38 112 17 120 113 161 77 70 151 14 90 129 18 79\n70 79",
+     "expectedOutput": "77",
+     "isSample": false
+    },
+    {
+     "input": "5\n14 94 73 19 165\n14 19",
+     "expectedOutput": "14",
+     "isSample": false
+    }
+   ]
+  },
+  {
+   "topicSlug": "graphs",
+   "title": "Counting Islands in a Grid",
+   "slug": "number-of-islands",
+   "difficulty": "MEDIUM",
+   "statement": "A grid of `1`s (land) and `0`s (water) is given. An island is a maximal\ngroup of land cells connected horizontally or vertically. Count the\nislands.\n\n**Input**: first line `rows cols`; then `rows` lines, each a string of\n`0`/`1` of length `cols`.\n**Output**: the number of islands.\n",
+   "constraints": "1 <= rows, cols <= 500",
+   "sampleIo": [
+    {
+     "input": "4 5\n11110\n11010\n11000\n00000",
+     "output": "1"
+    },
+    {
+     "input": "4 5\n11000\n11000\n00100\n00011",
+     "output": "3"
+    }
+   ],
+   "starterCode": {
+    "python": "# number-of-islands — read from stdin, print the answer to stdout\nimport sys\n\ndata = sys.stdin.read().split()\n# TODO: solve\n",
+    "javascript": "// number-of-islands — read from stdin, print the answer to stdout\nconst data = require('fs').readFileSync(0, 'utf8').trim().split(/\\s+/);\n// TODO: solve\n",
+    "cpp": "// number-of-islands — read from stdin, print the answer to stdout\n#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n    // TODO: solve\n    return 0;\n}\n",
+    "java": "// number-of-islands — read from stdin, print the answer to stdout\nimport java.util.*;\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // TODO: solve\n    }\n}\n"
+   },
+   "referenceSolution": {
+    "python": "import sys\nfrom collections import deque\ndata = sys.stdin.read().split()\nrows, cols = int(data[0]), int(data[1])\ngrid = [list(data[2 + r]) for r in range(rows)]\ncount = 0\nfor r in range(rows):\n    for c in range(cols):\n        if grid[r][c] == '1':\n            count += 1\n            q = deque([(r, c)]); grid[r][c] = '0'\n            while q:\n                y, x = q.popleft()\n                for dy, dx in ((1,0),(-1,0),(0,1),(0,-1)):\n                    ny, nx = y+dy, x+dx\n                    if 0 <= ny < rows and 0 <= nx < cols and grid[ny][nx] == '1':\n                        grid[ny][nx] = '0'; q.append((ny, nx))\nprint(count)\n"
+   },
+   "timeLimitMs": 2000,
+   "memoryLimitMb": 256,
+   "source": "Original statement; topic follows the Striver A2Z sheet structure",
+   "sourceUrl": "https://takeuforward.org/strivers-a2z-dsa-course/strivers-a2z-dsa-course-sheet-2/",
+   "cases": [
+    {
+     "input": "4 5\n11110\n11010\n11000\n00000",
+     "expectedOutput": "1",
+     "isSample": true
+    },
+    {
+     "input": "4 5\n11000\n11000\n00100\n00011",
+     "expectedOutput": "3",
+     "isSample": true
+    },
+    {
+     "input": "1 1\n0",
+     "expectedOutput": "0",
+     "isSample": false
+    },
+    {
+     "input": "1 1\n1",
+     "expectedOutput": "1",
+     "isSample": false
+    },
+    {
+     "input": "9 11\n01011001010\n00011011111\n10101011101\n00111001110\n01101100110\n00001001010\n00010110111\n00110111111\n00010110010",
+     "expectedOutput": "6",
+     "isSample": false
+    },
+    {
+     "input": "4 6\n101001\n101011\n010100\n101000",
+     "expectedOutput": "7",
+     "isSample": false
+    },
+    {
+     "input": "6 9\n011000100\n101010001\n100100011\n010100100\n110111010\n100100110",
+     "expectedOutput": "9",
+     "isSample": false
+    },
+    {
+     "input": "12 9\n100010100\n001111100\n110110111\n111011110\n101011001\n111101110\n111001100\n010000111\n001111001\n111000011\n011101100\n001010110",
+     "expectedOutput": "7",
+     "isSample": false
+    },
+    {
+     "input": "10 10\n1100100000\n1011100011\n1110010111\n0001000100\n1011010101\n0000100001\n0101111011\n1000111101\n0111101010\n1011000011",
+     "expectedOutput": "12",
+     "isSample": false
+    },
+    {
+     "input": "11 8\n00110011\n11100110\n01001111\n00101111\n01001101\n11000111\n10010000\n11100110\n11111101\n10110110\n01010000",
+     "expectedOutput": "7",
+     "isSample": false
+    },
+    {
+     "input": "5 2\n11\n10\n10\n11\n00",
+     "expectedOutput": "1",
+     "isSample": false
+    },
+    {
+     "input": "10 5\n11110\n11111\n00110\n11011\n11110\n11101\n01011\n11001\n10000\n00000",
+     "expectedOutput": "2",
+     "isSample": false
+    }
+   ]
+  },
+  {
+   "topicSlug": "dynamic-programming",
+   "title": "Longest Strictly Increasing Subsequence",
+   "slug": "longest-increasing-subsequence",
+   "difficulty": "MEDIUM",
+   "statement": "Find the length of the longest strictly increasing subsequence of the\ngiven array (elements keep their relative order but need not be\ncontiguous). An O(n log n) solution exists.\n\n**Input**: first line `n`; second line `n` integers.\n**Output**: the LIS length.\n",
+   "constraints": "1 <= n <= 10^5",
+   "sampleIo": [
+    {
+     "input": "8\n10 9 2 5 3 7 101 18",
+     "output": "4"
+    },
+    {
+     "input": "6\n0 1 0 3 2 3",
+     "output": "4"
+    }
+   ],
+   "starterCode": {
+    "python": "# longest-increasing-subsequence — read from stdin, print the answer to stdout\nimport sys\n\ndata = sys.stdin.read().split()\n# TODO: solve\n",
+    "javascript": "// longest-increasing-subsequence — read from stdin, print the answer to stdout\nconst data = require('fs').readFileSync(0, 'utf8').trim().split(/\\s+/);\n// TODO: solve\n",
+    "cpp": "// longest-increasing-subsequence — read from stdin, print the answer to stdout\n#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n    // TODO: solve\n    return 0;\n}\n",
+    "java": "// longest-increasing-subsequence — read from stdin, print the answer to stdout\nimport java.util.*;\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // TODO: solve\n    }\n}\n"
+   },
+   "referenceSolution": {
+    "python": "import sys\nfrom bisect import bisect_left\ndata = sys.stdin.read().split()\nn = int(data[0]); a = list(map(int, data[1:1+n]))\ntails = []\nfor x in a:\n    i = bisect_left(tails, x)\n    if i == len(tails): tails.append(x)\n    else: tails[i] = x\nprint(len(tails))\n"
+   },
+   "timeLimitMs": 2000,
+   "memoryLimitMb": 256,
+   "source": "Original statement; topic follows the Striver A2Z sheet structure",
+   "sourceUrl": "https://takeuforward.org/strivers-a2z-dsa-course/strivers-a2z-dsa-course-sheet-2/",
+   "cases": [
+    {
+     "input": "8\n10 9 2 5 3 7 101 18",
+     "expectedOutput": "4",
+     "isSample": true
+    },
+    {
+     "input": "6\n0 1 0 3 2 3",
+     "expectedOutput": "4",
+     "isSample": true
+    },
+    {
+     "input": "4\n7 7 7 7",
+     "expectedOutput": "1",
+     "isSample": false
+    },
+    {
+     "input": "1\n5",
+     "expectedOutput": "1",
+     "isSample": false
+    },
+    {
+     "input": "31\n21 30 6 8 0 35 10 26 30 30 12 18 20 18 3 5 36 14 34 2 11 26 11 2 25 31 11 18 2 0 19",
+     "expectedOutput": "8",
+     "isSample": false
+    },
+    {
+     "input": "41\n38 6 21 18 29 34 33 31 8 32 29 17 12 7 21 10 29 16 11 0 21 18 36 12 11 39 40 25 27 32 20 5 25 6 11 8 30 20 15 0 16",
+     "expectedOutput": "8",
+     "isSample": false
+    },
+    {
+     "input": "29\n15 28 17 21 19 37 36 0 16 23 15 3 7 29 19 10 25 32 19 7 40 18 23 39 14 14 8 30 9",
+     "expectedOutput": "7",
+     "isSample": false
+    },
+    {
+     "input": "34\n38 23 26 35 30 34 13 15 38 5 33 28 33 23 4 36 7 3 35 32 12 36 34 9 10 20 33 28 7 13 37 31 5 32",
+     "expectedOutput": "8",
+     "isSample": false
+    },
+    {
+     "input": "33\n3 29 8 32 26 29 36 3 35 29 19 1 25 16 0 13 37 4 2 27 22 4 34 3 4 30 2 18 26 11 8 26 23",
+     "expectedOutput": "6",
+     "isSample": false
+    },
+    {
+     "input": "29\n28 24 24 5 34 8 22 7 11 34 25 33 8 14 0 1 19 29 34 27 34 24 14 15 29 22 9 17 12",
+     "expectedOutput": "7",
+     "isSample": false
+    },
+    {
+     "input": "12\n2 26 39 1 15 13 4 6 38 2 28 38",
+     "expectedOutput": "5",
+     "isSample": false
+    },
+    {
+     "input": "48\n3 15 2 25 28 14 34 13 3 8 32 18 14 36 20 36 38 20 15 19 9 33 14 26 19 17 3 35 37 11 40 27 35 31 3 22 24 33 20 26 26 9 19 24 11 34 30 15",
+     "expectedOutput": "11",
+     "isSample": false
+    }
+   ]
+  },
+  {
+   "topicSlug": "bit-manipulation",
+   "title": "The Lonely Number",
+   "slug": "single-number",
+   "difficulty": "EASY",
+   "statement": "Every value in the array appears exactly twice, except one value that\nappears exactly once. Find it in O(n) time and O(1) extra space.\n\n**Input**: first line `n` (odd); second line `n` integers.\n**Output**: the value that appears once.\n",
+   "constraints": "1 <= n <= 10^5 (n odd)",
+   "sampleIo": [
+    {
+     "input": "3\n2 2 1",
+     "output": "1"
+    },
+    {
+     "input": "5\n4 1 2 1 2",
+     "output": "4"
+    }
+   ],
+   "starterCode": {
+    "python": "# single-number — read from stdin, print the answer to stdout\nimport sys\n\ndata = sys.stdin.read().split()\n# TODO: solve\n",
+    "javascript": "// single-number — read from stdin, print the answer to stdout\nconst data = require('fs').readFileSync(0, 'utf8').trim().split(/\\s+/);\n// TODO: solve\n",
+    "cpp": "// single-number — read from stdin, print the answer to stdout\n#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n    // TODO: solve\n    return 0;\n}\n",
+    "java": "// single-number — read from stdin, print the answer to stdout\nimport java.util.*;\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // TODO: solve\n    }\n}\n"
+   },
+   "referenceSolution": {
+    "python": "import sys\nfrom functools import reduce\nfrom operator import xor\ndata = sys.stdin.read().split()\nn = int(data[0])\nprint(reduce(xor, map(int, data[1:1+n])))\n"
+   },
+   "timeLimitMs": 2000,
+   "memoryLimitMb": 256,
+   "source": "Original statement; topic follows the Striver A2Z sheet structure",
+   "sourceUrl": "https://takeuforward.org/strivers-a2z-dsa-course/strivers-a2z-dsa-course-sheet-2/",
+   "cases": [
+    {
+     "input": "3\n2 2 1",
+     "expectedOutput": "1",
+     "isSample": true
+    },
+    {
+     "input": "5\n4 1 2 1 2",
+     "expectedOutput": "4",
+     "isSample": true
+    },
+    {
+     "input": "1\n99",
+     "expectedOutput": "99",
+     "isSample": false
+    },
+    {
+     "input": "19\n412 287 29 412 468 73 468 552 237 439 29 439 153 73 153 237 287 362 362",
+     "expectedOutput": "552",
+     "isSample": false
+    },
+    {
+     "input": "9\n592 300 300 411 389 96 96 389 411",
+     "expectedOutput": "592",
+     "isSample": false
+    },
+    {
+     "input": "11\n124 468 386 589 124 245 382 245 386 468 382",
+     "expectedOutput": "589",
+     "isSample": false
+    },
+    {
+     "input": "21\n411 262 184 254 262 369 389 451 184 238 240 389 540 238 411 240 369 50 254 451 50",
+     "expectedOutput": "540",
+     "isSample": false
+    },
+    {
+     "input": "39\n375 251 378 592 172 86 350 131 378 250 350 483 390 335 235 71 483 250 235 131 420 420 407 86 390 71 370 328 180 251 370 494 328 180 335 407 375 172 494",
+     "expectedOutput": "592",
+     "isSample": false
+    },
+    {
+     "input": "39\n123 416 98 220 345 357 123 91 317 412 317 470 465 257 257 8 268 8 345 470 146 54 76 49 91 146 54 465 567 481 220 76 357 49 481 412 416 98 268",
+     "expectedOutput": "567",
+     "isSample": false
+    },
+    {
+     "input": "21\n23 23 278 143 38 38 288 460 16 350 278 336 336 460 473 288 473 16 350 143 522",
+     "expectedOutput": "522",
+     "isSample": false
+    },
+    {
+     "input": "11\n174 577 118 223 223 429 429 38 118 38 174",
+     "expectedOutput": "577",
+     "isSample": false
+    },
+    {
+     "input": "39\n395 299 192 348 338 299 481 481 365 151 78 43 95 348 221 365 126 151 137 137 42 95 194 126 192 42 43 221 548 316 408 37 37 395 78 338 194 408 316",
+     "expectedOutput": "548",
+     "isSample": false
+    }
+   ]
+  }
+ ]
+}

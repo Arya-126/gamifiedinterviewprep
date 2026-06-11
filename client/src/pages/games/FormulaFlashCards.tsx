@@ -27,7 +27,7 @@ export const FormulaFlashCards: React.FC<Props> = ({ topicId, topicName, onCompl
       try {
         const data = await apiClient.get<TheoryData>(`/interview/topics/${topicId}/theory`);
         
-        const flashcards = [];
+        const flashcards: { front: string; back: string }[] = [];
         
         // Convert formulas to flashcards
         // Attempt to split by '=' or just show 'Formula' as front

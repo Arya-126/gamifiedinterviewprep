@@ -90,7 +90,7 @@ export const ConceptSprint: React.FC<Props> = ({ topicId, topicName, onComplete 
   }, [topicId]);
 
   useEffect(() => {
-    let interval: NodeJS.Timeout;
+    let interval: any;
     if (timerActive && !completed) {
       interval = setInterval(() => {
         setTimeRemaining(prev => {

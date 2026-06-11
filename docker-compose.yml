@@ -1,0 +1,25 @@
+# Piston — self-hosted code-execution sandbox for the assessment platform.
+# (Judge0 CE was the first choice but its isolate sandbox requires cgroup v1,
+# which modern WSL2 no longer supports; Piston runs fine on cgroup v2.)
+#
+# Runs inside WSL2 Ubuntu's Docker Engine:
+#   wsl -d Ubuntu -u root -- sh -c "cd /mnt/c/Users/arya1/OneDrive/Desktop/capstone && docker compose up -d"
+#   curl http://localhost:2000/api/v2/runtimes
+#
+# Language runtimes are installed once via scripts/setup-piston.ts.
+
+services:
+  piston:
+    image: ghcr.io/engineer-man/piston
+    container_name: piston_api
+    restart: always
+    privileged: true
+    ports:
+      - "2000:2000"
+    volumes:
+      - piston-packages:/piston/packages
+    tmpfs:
+      - /tmp:exec
+
+volumes:
+  piston-packages:

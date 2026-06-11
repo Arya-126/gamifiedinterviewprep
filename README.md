@@ -2,6 +2,48 @@
 
 A comprehensive gamified learning platform where students search topics, play educational games, earn XP, and receive diagnostic testing with weakness detection (for college students).
 
+> **Assessment platform: all 8 phases complete** — see [STATUS.md](STATUS.md) for the phase-by-phase record.
+> Database is native PostgreSQL 18 (`learndb` @ 127.0.0.1:5432); browse it with the bundled pgAdmin 4 — setup steps in [docs/pgadmin-setup.md](docs/pgadmin-setup.md).
+
+## Assessment Platform — Quick Run
+
+```bash
+# 1. Code-execution sandbox (Piston in WSL2 docker — auto-starts with WSL)
+wsl -d Ubuntu -u root -- true        # wakes WSL; dockerd + Piston come up on boot
+curl http://localhost:2000/api/v2/runtimes   # should list python/node/c++/java
+
+# 2. Server (port 4000 — or set PORT if something else holds it)
+cd server && npm run dev
+
+# 3. Client
+cd client && npm run dev             # http://localhost:5173
+```
+
+**Logins:** student `student@example.com` / `password` · admin `admin@example.com` / `password`
+
+**What's where (assessment platform):**
+- 📝 Mock Tests — placement-style tests (sections, autosave, server-side timing/grading), company pattern mocks (JP Morgan, Standard Chartered), Monaco coding questions with sandboxed run/submit
+- 🤖 AI Interview — adaptive mock interview with rubric-scored report (Groq now; uses Anthropic automatically if `ANTHROPIC_API_KEY` is set)
+- 🔍 Review Queue (admin) — confirm answer keys the AI solver proposed or disagreed on
+- 🛠 Test Builder (admin) — sections with selection rules (RANDOM / ONE_PER_TOPIC, difficulty mix, verified-only)
+- 📊 Attempt Reports (admin) — proctoring timeline + snapshots, integrity signal, cohort analytics, CSV export
+
+**Key scripts** (`cd server`):
+```bash
+npx ts-node scripts/db-health.ts          # row counts for every table
+npx ts-node scripts/solve-and-verify.ts   # AI answer keys (resumable; ~70 questions/day on Groq free tier)
+npx ts-node scripts/verify-dsa.ts         # re-verify coding reference solutions through Piston
+npx ts-node scripts/setup-piston.ts       # (re)install sandbox language runtimes
+npx ts-node scripts/seed-handout.ts       # reload the 868-question bank (needs scripts/extract_handout.py first)
+npx ts-node scripts/seed-dsa.ts           # reload the 14 coding problems
+npx ts-node scripts/seed-sample-test.ts   # the "Full Mock" practice test
+npx ts-node scripts/seed-companies.ts     # JP Morgan + Standard Chartered profiles
+npx ts-node scripts/e2e-attempt.ts        # end-to-end attempt-lifecycle test (server on :4100)
+npx ts-node scripts/purge-snapshots.ts    # proctoring snapshot retention (default 30 days)
+```
+
+Proctoring privacy & retention: [docs/proctoring-privacy.md](docs/proctoring-privacy.md)
+
 ## Phase 1 Status: COMPLETE ✅
 
 All core features implemented. Ready to test end-to-end.

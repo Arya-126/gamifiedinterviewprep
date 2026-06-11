@@ -34,7 +34,7 @@ export const WordScramble: React.FC<WordScrambleProps> = ({ topicId, topicName, 
   }, [topicId]);
 
   useEffect(() => {
-    let interval: NodeJS.Timeout;
+    let interval: any;
     if (timerActive && !gameComplete) {
       interval = setInterval(() => {
         setTimeRemaining((prev) => {

@@ -26,6 +26,9 @@ model User {
   domainProgress   UserDomainProgress[]
   userAchievements UserAchievement[]
   interviewProgress UserInterviewProgress[]
+  testAttempts     TestAttempt[]
+  aiInterviews     AiInterview[]
+  createdTests     AssessmentTest[] @relation("CreatedTests")
 }
 
 enum Role {
@@ -286,4 +289,298 @@ model UserInterviewProgress {
   lastPlayedAt DateTime?
 
   @@unique([userId, topicId])
+}
+
+// ===== ASSESSMENT PLATFORM (proctored tests + AI interview) =====
+// Named Assessment* to avoid collision with the legacy Topic/Test/Question
+// models above, which belong to the game arcade and store results only.
+
+enum AssessmentCategory {
+  QUANTITATIVE
+  LOGICAL
+  VERBAL
+  CODING
+}
+
+enum AssessmentQuestionType {
+  SINGLE
+  MULTI
+  FILL
+  TRUE_FALSE
+}
+
+enum AssessmentDifficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+enum AssessmentTestMode {
+  PRACTICE
+  PROCTORED
+}
+
+enum AssessmentTestStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum TestSectionKind {
+  APTITUDE
+  VERBAL
+  LOGICAL
+  CODING
+  MIXED
+}
+
+enum AttemptStatus {
+  IN_PROGRESS
+  SUBMITTED
+  EXPIRED
+}
+
+enum ProctoringEventType {
+  TAB_BLUR
+  TAB_FOCUS
+  FULLSCREEN_EXIT
+  COPY
+  PASTE
+  FACE_NOT_DETECTED
+  MULTIPLE_FACES
+  NO_CAMERA
+  SNAPSHOT
+}
+
+enum AiInterviewStatus {
+  IN_PROGRESS
+  COMPLETED
+  ABANDONED
+}
+
+enum AiInterviewTurnRole {
+  INTERVIEWER
+  CANDIDATE
+}
+
+model AssessmentTopic {
+  id        String             @id @default(uuid())
+  name      String
+  slug      String             @unique
+  category  AssessmentCategory
+  parentId  String?
+  parent    AssessmentTopic?   @relation("AssessmentTopicTree", fields: [parentId], references: [id])
+  children  AssessmentTopic[]  @relation("AssessmentTopicTree")
+  order     Int                @default(0)
+  createdAt DateTime           @default(now())
+
+  questions      AssessmentQuestion[]
+  codingProblems CodingProblem[]
+}
+
+model AssessmentQuestion {
+  id             String                 @id @default(uuid())
+  topicId        String
+  topic          AssessmentTopic        @relation(fields: [topicId], references: [id])
+  type           AssessmentQuestionType @default(SINGLE)
+  difficulty     AssessmentDifficulty   @default(MEDIUM)
+  stem           String // markdown
+  assets         Json? // images/tables/figures; assets.requiresImage = true for figure-based items
+  explanation    String? // worked solution (from solve-and-verify or human)
+  proposedAnswer String? // option letter proposed by AI solver, pending human confirmation
+  source         String?
+  sourceUrl      String?
+  verified       Boolean                @default(false)
+  createdAt      DateTime               @default(now())
+  updatedAt      DateTime               @updatedAt
+
+  options      AssessmentOption[]
+  sectionItems TestSectionItem[]
+  responses    AttemptResponse[]
+}
+
+model AssessmentOption {
+  id         String             @id @default(uuid())
+  questionId String
+  question   AssessmentQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  text       String
+  isCorrect  Boolean            @default(false)
+  order      Int                @default(0)
+}
+
+model CodingProblem {
+  id                String               @id @default(uuid())
+  topicId           String
+  topic             AssessmentTopic      @relation(fields: [topicId], references: [id])
+  title             String
+  slug              String               @unique
+  statement         String // markdown — our own restated statement, never scraped text
+  difficulty        AssessmentDifficulty @default(MEDIUM)
+  constraints       String?
+  sampleIo          Json? // [{ input, output, explanation? }]
+  starterCode       Json? // keyed by language: { cpp, java, python, javascript }
+  referenceSolution Json? // keyed by language
+  timeLimitMs       Int                  @default(2000)
+  memoryLimitMb     Int                  @default(256)
+  source            String?
+  sourceUrl         String? // attribution link (e.g. A2Z sheet item)
+  verified          Boolean              @default(false) // true once reference solution passes all test cases
+  createdAt         DateTime             @default(now())
+
+  testCases    TestCase[]
+  sectionItems TestSectionItem[]
+  responses    AttemptResponse[]
+}
+
+model TestCase {
+  id              String        @id @default(uuid())
+  codingProblemId String
+  codingProblem   CodingProblem @relation(fields: [codingProblemId], references: [id], onDelete: Cascade)
+  input           String
+  expectedOutput  String
+  isSample        Boolean       @default(false)
+  weight          Int           @default(1)
+}
+
+model Company {
+  id      String  @id @default(uuid())
+  name    String
+  slug    String  @unique
+  logoUrl String?
+  notes   String?
+  profile Json? // pattern profile: topic weights, difficulty mix, round structure, interview style
+
+  tests      AssessmentTest[]
+  interviews AiInterview[]
+}
+
+model AssessmentTest {
+  id              String               @id @default(uuid())
+  title           String
+  description     String?
+  durationMinutes Int                  @default(90) // free integer; UI offers 90 / 180 presets
+  mode            AssessmentTestMode   @default(PRACTICE)
+  companyId       String?
+  company         Company?             @relation(fields: [companyId], references: [id])
+  randomizeOrder  Boolean              @default(false)
+  negativeMarking Float                @default(0) // marks deducted per wrong answer
+  passScore       Int?
+  createdById     String?
+  createdBy       User?                @relation("CreatedTests", fields: [createdById], references: [id])
+  status          AssessmentTestStatus @default(DRAFT)
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+
+  sections TestSection[]
+  attempts TestAttempt[]
+}
+
+model TestSection {
+  id               String          @id @default(uuid())
+  testId           String
+  test             AssessmentTest  @relation(fields: [testId], references: [id], onDelete: Cascade)
+  title            String
+  kind             TestSectionKind
+  selectionRule    Json? // e.g. { strategy: "ONE_PER_TOPIC", category, difficultyMix, verifiedOnly }
+  marksPerQuestion Float           @default(1)
+  order            Int             @default(0)
+
+  items TestSectionItem[]
+}
+
+// Fixed/pinned items in a section. Dynamic items come from selectionRule at attempt start.
+model TestSectionItem {
+  id              String              @id @default(uuid())
+  sectionId       String
+  section         TestSection         @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  questionId      String?
+  question        AssessmentQuestion? @relation(fields: [questionId], references: [id])
+  codingProblemId String?
+  codingProblem   CodingProblem?      @relation(fields: [codingProblemId], references: [id])
+  order           Int                 @default(0)
+}
+
+model TestAttempt {
+  id              String         @id @default(uuid())
+  testId          String
+  test            AssessmentTest @relation(fields: [testId], references: [id])
+  userId          String
+  user            User           @relation(fields: [userId], references: [id])
+  startedAt       DateTime       @default(now())
+  submittedAt     DateTime?
+  status          AttemptStatus  @default(IN_PROGRESS)
+  durationUsedSec Int            @default(0)
+  score           Float?
+  breakdown       Json? // per-section / per-topic score breakdown
+  itemsSnapshot   Json? // resolved ordered item list, frozen at attempt start
+  consentAt       DateTime? // proctoring consent timestamp (required for PROCTORED)
+
+  responses        AttemptResponse[]
+  proctoringEvents ProctoringEvent[]
+
+  @@index([testId, userId])
+}
+
+model AttemptResponse {
+  id              String              @id @default(uuid())
+  attemptId       String
+  attempt         TestAttempt         @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  questionId      String?
+  question        AssessmentQuestion? @relation(fields: [questionId], references: [id])
+  codingProblemId String?
+  codingProblem   CodingProblem?      @relation(fields: [codingProblemId], references: [id])
+  answer          Json? // MCQ: chosen option id(s); coding: { language, code, lastRun }
+  isCorrect       Boolean?
+  marks           Float               @default(0)
+  timeSpentSec    Int                 @default(0)
+  flagged         Boolean             @default(false)
+  updatedAt       DateTime            @updatedAt
+
+  @@unique([attemptId, questionId])
+  @@unique([attemptId, codingProblemId])
+}
+
+model ProctoringEvent {
+  id          String              @id @default(uuid())
+  attemptId   String
+  attempt     TestAttempt         @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  type        ProctoringEventType
+  meta        Json?
+  snapshotUrl String?
+  createdAt   DateTime            @default(now())
+
+  @@index([attemptId, createdAt])
+}
+
+// Conversational AI interview — distinct from the InterviewCategory/InterviewTopic
+// MCQ prep module above.
+model AiInterview {
+  id           String            @id @default(uuid())
+  userId       String
+  user         User              @relation(fields: [userId], references: [id])
+  role         String // e.g. "SDE", "Backend"
+  companyId    String?
+  company      Company?          @relation(fields: [companyId], references: [id])
+  status       AiInterviewStatus @default(IN_PROGRESS)
+  startedAt    DateTime          @default(now())
+  endedAt      DateTime?
+  overallScore Float?
+  rubricScores Json? // { technical, communication, structure, problemSolving, roleFit } 0–5 each
+  summary      String?
+
+  turns AiInterviewTurn[]
+}
+
+model AiInterviewTurn {
+  id          String              @id @default(uuid())
+  interviewId String
+  interview   AiInterview         @relation(fields: [interviewId], references: [id], onDelete: Cascade)
+  role        AiInterviewTurnRole
+  content     String
+  audioUrl    String?
+  turnScore   Float?
+  feedback    String?
+  order       Int
+
+  @@index([interviewId, order])
 }

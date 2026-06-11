@@ -37,7 +37,7 @@ export const ConceptCannon: React.FC<ConceptCannonProps> = ({ topicId, topicName
   }, [topicId]);
 
   useEffect(() => {
-    let interval: NodeJS.Timeout;
+    let interval: any;
     if (timerActive && !gameComplete) {
       interval = setInterval(() => {
         setTimeRemaining((prev) => {

@@ -9,3 +9,12 @@ dist/
 .idea/
 build/
 coverage/
+
+# Secrets & copyrighted source material
+serviceAccountKey.json
+server/prisma/data/*.pdf
+server/uploads/
+
+# Local-only files
+B2_course materials_60hr.pdf
+.claude/settings.local.json

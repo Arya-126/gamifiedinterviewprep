@@ -10,6 +10,8 @@
     "lint": "eslint src --ext ts,tsx"
   },
   "dependencies": {
+    "@mediapipe/tasks-vision": "^0.10.35",
+    "@monaco-editor/react": "^4.7.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },

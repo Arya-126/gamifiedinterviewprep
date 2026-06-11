@@ -32,7 +32,7 @@ export const CrosswordPuzzle: React.FC<CrosswordPuzzleProps> = ({ topicId, topic
   }, [topicId]);
 
   useEffect(() => {
-    let interval: NodeJS.Timeout;
+    let interval: any;
     if (timerActive && !gameComplete) {
       interval = setInterval(() => {
         setTimeElapsed((prev) => prev + 1);

@@ -36,7 +36,7 @@ export const MemoryMatch: React.FC<MemoryMatchProps> = ({ topicId, topicName, on
   }, [topicId]);
 
   useEffect(() => {
-    let interval: NodeJS.Timeout;
+    let interval: any;
     if (timerActive && !gameComplete) {
       interval = setInterval(() => {
         setTimeElapsed((prev) => prev + 1);

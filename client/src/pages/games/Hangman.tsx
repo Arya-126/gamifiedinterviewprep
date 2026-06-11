@@ -37,7 +37,7 @@ export const Hangman: React.FC<HangmanProps> = ({ topicId, topicName, onGameComp
   }, [topicId]);
 
   useEffect(() => {
-    let interval: NodeJS.Timeout;
+    let interval: any;
     if (timerActive && !gameComplete) {
       interval = setInterval(() => {
         setTimeElapsed((prev) => prev + 1);
