@@ -1,9 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { apiClient } from '../../services/api';
-
-// Time Rush — 60-second flashcard sprint on a random topic.
-// Cards are derived server-side from InterviewTheory.keyPoints.
-// User self-reports "got it" / "next" — count of self-reported-correct in 60s.
+import { FullScreenShell } from '../../components/FullScreenShell';
 
 interface Card {
   id: string;
@@ -19,7 +16,19 @@ interface Payload {
   cards: Card[];
 }
 
-export const TimeRushGame: React.FC<{ onBack: () => void }> = ({ onBack }) => {
+interface TimeRushGameProps {
+  onBack: () => void;
+  user?: any;
+  onNavigate?: (page: string) => void;
+  onLogout?: () => void;
+}
+
+export const TimeRushGame: React.FC<TimeRushGameProps> = ({
+  onBack,
+  user,
+  onNavigate = () => {},
+  onLogout,
+}) => {
   const [data, setData] = useState<Payload | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [phase, setPhase] = useState<'intro' | 'play' | 'done'>('intro');
@@ -37,7 +46,6 @@ export const TimeRushGame: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       .catch(() => setError('Could not load a topic — try again.'));
   }, []);
 
-  // 60-second timer
   useEffect(() => {
     if (phase !== 'play' || !data) return;
     startTs.current = Date.now();
@@ -53,125 +61,162 @@ export const TimeRushGame: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     return () => clearInterval(t);
   }, [phase, data]);
 
-  if (error) return <div className="max-w-lg mx-auto py-10 text-center text-red-700">{error}</div>;
-  if (!data) return <div className="max-w-lg mx-auto py-16 text-center text-gray-400 animate-pulse">Loading…</div>;
-
-  if (phase === 'intro') {
-    return (
-      <div className="max-w-xl mx-auto py-6">
-        <button onClick={onBack} className="text-sm font-bold text-indigo-600 mb-4">← Back</button>
-        <div className="bg-white p-6 rounded-2xl shadow">
-          <div className="text-4xl mb-2">⏱</div>
-          <h1 className="text-2xl font-black text-gray-900">Time Rush</h1>
-          <p className="text-sm text-gray-500 mt-1">
-            Topic: <b>{data.topicName}</b> ({data.categoryName})
-          </p>
-          <ul className="text-sm text-gray-700 space-y-2 my-5">
-            <li>• {data.durationSec} seconds, {data.cards.length} flashcards</li>
-            <li>• Tap to reveal the answer, then rate yourself <b>Got it</b> or <b>Next</b></li>
-            <li>• Count of "Got it" is your score</li>
-          </ul>
-          <button
-            onClick={() => setPhase('play')}
-            className="w-full py-3 rounded-xl font-black text-white bg-indigo-600 hover:bg-indigo-700 transition"
-          >
-            🚀 Start
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  if (phase === 'done') {
-    const total = got + skipped;
-    const pct = total > 0 ? Math.round((got / total) * 100) : 0;
-    return (
-      <div className="max-w-xl mx-auto py-6 text-center">
-        <div className="bg-white p-8 rounded-2xl shadow">
-          <div className="text-5xl font-black text-indigo-600">{got}</div>
-          <div className="text-xs font-bold text-gray-400 uppercase tracking-widest">Got it in 60 seconds</div>
-          <div className="text-sm text-gray-600 mt-4">
-            Attempted {total} cards · {pct}% confidence
-          </div>
-          <div className="flex gap-3 mt-6">
-            <button onClick={onBack} className="flex-1 py-3 rounded-xl font-bold text-gray-600 bg-slate-100">
-              Back
-            </button>
-            <button
-              onClick={() => {
-                setPhase('intro'); setIdx(0); setGot(0); setSkipped(0); setRevealed(false);
-              }}
-              className="flex-1 py-3 rounded-xl font-black text-white bg-indigo-600"
-            >
-              🔄 Play again
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // playing
-  const card = data.cards[idx % data.cards.length];
-  const secLeft = Math.ceil(timeLeftMs / 1000);
-  const barPct = (timeLeftMs / (data.durationSec * 1000)) * 100;
-  const barColor = barPct < 20 ? 'bg-red-500' : 'bg-indigo-500';
-
-  const advance = (gotIt: boolean) => {
-    if (gotIt) setGot(got + 1);
-    else setSkipped(skipped + 1);
-    setRevealed(false);
-    setIdx(idx + 1);
-  };
-
   return (
-    <div className="max-w-xl mx-auto py-6">
-      <div className="flex justify-between items-center mb-3 text-xs font-bold uppercase tracking-widest text-gray-500">
-        <span>Card {idx + 1}</span>
-        <span className={secLeft < 12 ? 'text-red-600' : 'text-gray-700'}>{secLeft}s</span>
-      </div>
-      <div className="w-full bg-gray-100 rounded-full h-1 mb-4">
-        <div className={`h-1 rounded-full transition-all ${barColor}`} style={{ width: `${barPct}%` }} />
-      </div>
-
-      <div className="bg-white p-8 rounded-2xl shadow min-h-[280px] flex flex-col justify-center text-center">
-        <div className="text-[10px] font-black uppercase text-indigo-500 mb-2">
-          {card.kind === 'term-def' ? 'Define this' : 'Recall'}
-        </div>
-        <div className="text-xl font-black text-gray-900 mb-4 whitespace-pre-wrap">{card.prompt}</div>
-        {revealed && card.answer && (
-          <div className="text-sm text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg p-3 whitespace-pre-wrap">
-            {card.answer}
+    <FullScreenShell
+      title="Time Rush"
+      subtitle="60-second rapid fire concept flashcard sprint"
+      currentPage="game-time-rush"
+      user={user}
+      onNavigate={onNavigate}
+      onLogout={onLogout}
+    >
+      <div className="max-w-xl mx-auto space-y-4">
+        {error ? (
+          <div className="bg-rose-500/10 border border-rose-500/30 text-rose-300 p-6 rounded-2xl text-center text-xs">
+            {error}
           </div>
+        ) : !data ? (
+          <div className="text-center py-20 text-slate-500 font-medium animate-pulse">
+            Loading rapid sprint...
+          </div>
+        ) : phase === 'intro' ? (
+          <div className="bg-slate-900/90 p-8 rounded-3xl shadow-2xl border border-slate-800 text-center">
+            <div className="text-5xl mb-3">⏱</div>
+            <h1 className="text-2xl font-black text-white">Time Rush Sprint</h1>
+            <p className="text-xs text-slate-400 mt-1 mb-6">
+              Topic: <b className="text-indigo-400">{data.topicName}</b> ({data.categoryName})
+            </p>
+            <div className="bg-slate-950/60 p-5 rounded-2xl border border-slate-800 text-left text-xs text-slate-300 space-y-2 mb-6">
+              <div>• {data.durationSec} seconds, {data.cards.length} flashcards</div>
+              <div>• Tap to reveal the answer, then rate yourself <b>Got it</b> or <b>Next</b></div>
+              <div>• Count of self-verified "Got it" is your final sprint score</div>
+            </div>
+            <button
+              onClick={() => setPhase('play')}
+              className="w-full py-4 rounded-xl font-bold text-xs text-white bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 shadow-lg shadow-indigo-500/25 active:scale-95 transition"
+            >
+              🚀 Start 60s Sprint
+            </button>
+          </div>
+        ) : phase === 'done' ? (
+          (() => {
+            const total = got + skipped;
+            const pct = total > 0 ? Math.round((got / total) * 100) : 0;
+            return (
+              <div className="bg-slate-900/90 p-8 rounded-3xl shadow-2xl border border-slate-800 text-center">
+                <div className="text-5xl font-black text-indigo-400 mb-1">{got}</div>
+                <div className="text-xs font-bold text-slate-500 uppercase tracking-widest">
+                  Mastered in 60 seconds
+                </div>
+                <div className="text-xs text-slate-400 mt-4 mb-6">
+                  Attempted {total} cards · {pct}% retention confidence
+                </div>
+                <div className="flex gap-3">
+                  <button
+                    onClick={onBack}
+                    className="flex-1 py-3.5 rounded-xl font-bold text-xs text-slate-300 bg-slate-800 hover:bg-slate-700 border border-slate-700 transition"
+                  >
+                    Back to Games
+                  </button>
+                  <button
+                    onClick={() => {
+                      setPhase('intro');
+                      setIdx(0);
+                      setGot(0);
+                      setSkipped(0);
+                      setRevealed(false);
+                    }}
+                    className="flex-1 py-3.5 rounded-xl font-bold text-xs text-white bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 shadow-md shadow-indigo-500/25 transition"
+                  >
+                    🔄 Play Again
+                  </button>
+                </div>
+              </div>
+            );
+          })()
+        ) : (
+          (() => {
+            const card = data.cards[idx % data.cards.length];
+            const secLeft = Math.ceil(timeLeftMs / 1000);
+            const barPct = (timeLeftMs / (data.durationSec * 1000)) * 100;
+            const barColor = barPct < 20 ? 'bg-rose-500' : 'bg-gradient-to-r from-indigo-500 to-violet-500';
+
+            const advance = (gotIt: boolean) => {
+              if (gotIt) setGot(got + 1);
+              else setSkipped(skipped + 1);
+              setRevealed(false);
+              setIdx(idx + 1);
+            };
+
+            return (
+              <div className="space-y-4">
+                <div className="flex justify-between items-center bg-slate-900/80 border border-slate-800 rounded-2xl p-4 shadow-xl">
+                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                    Card {idx + 1}
+                  </span>
+                  <span
+                    className={`text-xs font-black px-2.5 py-1 rounded-full border ${
+                      secLeft < 12
+                        ? 'bg-rose-500/10 text-rose-400 border-rose-500/30 animate-pulse'
+                        : 'bg-indigo-500/10 text-indigo-400 border-indigo-500/30'
+                    }`}
+                  >
+                    ⏱️ {secLeft}s
+                  </span>
+                </div>
+
+                <div className="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
+                  <div
+                    className={`h-2 rounded-full transition-all duration-200 ${barColor}`}
+                    style={{ width: `${barPct}%` }}
+                  />
+                </div>
+
+                <div className="bg-slate-900/90 p-8 rounded-3xl shadow-2xl border border-slate-800 min-h-[260px] flex flex-col justify-center text-center">
+                  <div className="text-[10px] font-black uppercase text-indigo-400 mb-2">
+                    {card.kind === 'term-def' ? 'Define this concept' : 'Recall key point'}
+                  </div>
+                  <div className="text-lg font-black text-white mb-4 whitespace-pre-wrap leading-relaxed">
+                    {card.prompt}
+                  </div>
+                  {revealed && card.answer && (
+                    <div className="text-xs text-emerald-300 bg-emerald-950/40 border border-emerald-500/30 rounded-xl p-4 whitespace-pre-wrap leading-relaxed animate-fade-in">
+                      {card.answer}
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex gap-2">
+                  {card.answer && !revealed && (
+                    <button
+                      onClick={() => setRevealed(true)}
+                      className="flex-1 py-3.5 rounded-xl font-bold text-xs text-white bg-slate-800 hover:bg-slate-700 border border-slate-700 transition"
+                    >
+                      👁 Reveal Answer
+                    </button>
+                  )}
+                  <button
+                    onClick={() => advance(false)}
+                    className="flex-1 py-3.5 rounded-xl font-bold text-xs text-slate-300 bg-slate-900/80 hover:bg-slate-800 border border-slate-800 transition"
+                  >
+                    Next
+                  </button>
+                  <button
+                    onClick={() => advance(true)}
+                    className="flex-1 py-3.5 rounded-xl font-bold text-xs text-white bg-emerald-600 hover:bg-emerald-500 transition shadow-lg shadow-emerald-600/20"
+                  >
+                    ✓ Got it
+                  </button>
+                </div>
+
+                <div className="text-center text-xs text-slate-500 mt-2">
+                  Score so far: <b className="text-emerald-400">{got}</b> · Skipped: {skipped}
+                </div>
+              </div>
+            );
+          })()
         )}
       </div>
-
-      <div className="flex gap-2 mt-4">
-        {card.answer && !revealed && (
-          <button
-            onClick={() => setRevealed(true)}
-            className="flex-1 py-3 rounded-xl font-black text-white bg-slate-800 hover:bg-slate-900 transition"
-          >
-            👁 Reveal
-          </button>
-        )}
-        <button
-          onClick={() => advance(false)}
-          className="flex-1 py-3 rounded-xl font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 transition"
-        >
-          Next
-        </button>
-        <button
-          onClick={() => advance(true)}
-          className="flex-1 py-3 rounded-xl font-black text-white bg-emerald-600 hover:bg-emerald-700 transition"
-        >
-          ✓ Got it
-        </button>
-      </div>
-
-      <div className="text-center text-xs text-gray-400 mt-3">
-        Score so far: <b className="text-emerald-700">{got}</b> · Skipped: {skipped}
-      </div>
-    </div>
+    </FullScreenShell>
   );
 };

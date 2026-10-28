@@ -19,7 +19,7 @@ const SECTIONS: NavSection[] = [
       { icon: '🚀', label: 'Placement Drive', page: 'placement-drive' },
       { icon: '📊', label: 'Prep Analytics', page: 'prep-tracker' },
       { icon: '📝', label: 'Reports', page: 'reports' },
-      { icon: '🎮', label: 'Prep Games', page: 'prep-games' },
+      { icon: '🎮', label: 'Learning Games', page: 'prep-games' },
       { icon: '🎯', label: 'Active Quests', page: 'quests-hub' },
       { icon: '🧮', label: 'Aptitude', page: 'interview-hub' },
       { icon: '💻', label: 'Coding Tracks', page: 'coding-tracks' },
@@ -39,7 +39,10 @@ const SECTIONS: NavSection[] = [
   },
   {
     title: 'More',
-    items: [{ icon: '🎮', label: 'Learning Games', page: 'dashboard' }],
+    items: [
+      { icon: '🚀', label: 'Domain Topics', page: 'domains' },
+      { icon: '🕹️', label: 'Classic Arcade', page: 'dashboard' },
+    ],
   },
 ];
 

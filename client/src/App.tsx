@@ -151,28 +151,12 @@ const App: React.FC = () => {
     };
   }, []);
 
-  // Post-auth landing decision. First-time users (no UserSkillProfile row) get
-  // routed to the diagnostic intro; returning users go to interview-home as
-  // before. Failure to fetch is non-fatal — fall through to the old default.
+  // Post-auth landing decision. User requested landing on the full-screen
+  // learning games page immediately after login.
   const routeAfterAuth = async () => {
-    try {
-      const profile = await apiClient.get<any>('/diagnostic/profile');
-      if (profile && profile.diagnosticAt) {
-        // Returning user with a profile — try to land on their pipeline, but
-        // fall back to interview-home if they have no active pipeline.
-        try {
-          const pl = await apiClient.get<any>('/pipeline/current');
-          setCurrentPage(pl ? 'pipeline' : 'interview-home');
-        } catch {
-          setCurrentPage('interview-home');
-        }
-      } else {
-        setCurrentPage('diagnostic-intro');
-      }
-    } catch {
-      setCurrentPage('interview-home');
-    }
+    setCurrentPage('prep-games');
   };
+
 
   const handleRegister = async (name: string, email: string, password: string, role: string) => {
     setError(null);
@@ -258,6 +242,14 @@ const App: React.FC = () => {
     'interview-room',
     'coding-interview-room',
     'diagnostic-test',
+    'prep-games',
+    'game-complexity-sort',
+    'game-time-rush',
+    'game-star-roleplay',
+    'game-bug-hunt',
+    'game-dry-run',
+    'game-sql-puzzle',
+    'game-diagram-labeler',
   ]);
   const isFullscreen = FULLSCREEN_PAGES.has(currentPage);
 
@@ -520,7 +512,12 @@ const App: React.FC = () => {
         )}
 
         {currentPage === 'prep-games' && auth.user && (
-          <PrepGamesHub onOpen={(k) => setCurrentPage(`game-${k}`)} />
+          <PrepGamesHub
+            user={auth.user}
+            onOpen={(k) => setCurrentPage(`game-${k}`)}
+            onNavigate={(page) => { setCurrentPage(page); setError(null); }}
+            onLogout={handleLogout}
+          />
         )}
         {currentPage === 'game-complexity-sort' && auth.user && (
           <ComplexitySortGame onBack={() => setCurrentPage('prep-games')} />

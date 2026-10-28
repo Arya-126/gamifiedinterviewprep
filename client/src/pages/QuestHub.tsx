@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { apiClient } from '../services/api';
+import { FullScreenShell } from '../components/FullScreenShell';
 
 interface Milestone {
   step: number;
@@ -18,7 +19,13 @@ interface Quest {
   createdAt: string;
 }
 
-export const QuestHub: React.FC<{ onNavigate: (page: string) => void }> = ({ onNavigate }) => {
+interface QuestHubProps {
+  user?: any;
+  onNavigate: (page: string) => void;
+  onLogout?: () => void;
+}
+
+export const QuestHub: React.FC<QuestHubProps> = ({ user, onNavigate, onLogout }) => {
   const [quests, setQuests] = useState<Quest[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -47,113 +54,142 @@ export const QuestHub: React.FC<{ onNavigate: (page: string) => void }> = ({ onN
   };
 
   return (
-    <div className="max-w-4xl mx-auto py-6">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <button onClick={() => onNavigate('dashboard')} className="text-indigo-600 font-bold mb-1 hover:underline">
+    <FullScreenShell
+      title="Diagnostic Quests"
+      subtitle="Personalized learning paths generated from your AI mock interview weak areas"
+      currentPage="quest-hub"
+      user={user}
+      onNavigate={onNavigate}
+      onLogout={onLogout}
+    >
+      <div className="max-w-4xl mx-auto space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-900/80 border border-slate-800/80 rounded-2xl p-6 shadow-xl backdrop-blur-sm">
+          <div>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 text-xs font-semibold uppercase tracking-wider mb-2">
+              🎯 Personalized Growth
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-black text-white">Active Diagnostic Quests</h1>
+            <p className="text-sm text-slate-400 mt-1">
+              Targeted milestones generated from your mock interview weak areas. Complete them to earn bonus XP and mastery!
+            </p>
+          </div>
+          <button
+            onClick={() => onNavigate('dashboard')}
+            className="self-start sm:self-center px-4 py-2 rounded-xl text-xs font-bold text-slate-300 bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700/50 hover:text-white transition flex items-center gap-1.5"
+          >
             ← Back to Dashboard
           </button>
-          <h1 className="text-3xl font-black text-gray-900">🎯 Active Diagnostic Quests</h1>
-          <p className="text-sm text-gray-600">
-            Personalized learning paths generated from your AI mock interview weak areas. Complete milestones to earn XP!
-          </p>
         </div>
-      </div>
 
-      {loading ? (
-        <div className="text-center py-12 text-gray-400">Loading your learning quests…</div>
-      ) : quests.length === 0 ? (
-        <div className="bg-white p-12 rounded-2xl shadow text-center border border-gray-100">
-          <div className="text-5xl mb-3">✨</div>
-          <h3 className="font-black text-lg text-gray-900 mb-1">No Active Quests Yet</h3>
-          <p className="text-sm text-gray-500 max-w-md mx-auto mb-6">
-            Take an HR, Technical, or Coding mock interview round. The diagnosis engine will automatically create custom quests based on your performance.
-          </p>
-          <button
-            onClick={() => onNavigate('ai-interview')}
-            className="px-6 py-3 rounded-xl font-black text-white bg-indigo-600 hover:bg-indigo-700 transition"
-          >
-            🤖 Take an AI Interview Round
-          </button>
-        </div>
-      ) : (
-        <div className="space-y-6">
-          {quests.map((q) => {
-            const milestones = q.milestones || [];
-            const completedCount = milestones.filter((m) => m.completed).length;
-            const pct = milestones.length > 0 ? Math.round((completedCount / milestones.length) * 100) : 0;
-            const isFinished = q.status === 'COMPLETED';
+        {loading ? (
+          <div className="text-center py-16 text-slate-500 animate-pulse font-medium">
+            Loading your learning quests…
+          </div>
+        ) : quests.length === 0 ? (
+          <div className="bg-slate-900/90 p-12 rounded-2xl shadow-xl text-center border border-slate-800">
+            <div className="text-5xl mb-4">✨</div>
+            <h3 className="font-black text-xl text-white mb-2">No Active Quests Yet</h3>
+            <p className="text-sm text-slate-400 max-w-md mx-auto mb-6 leading-relaxed">
+              Take an HR, Technical, or Coding mock interview round. The diagnostic engine will automatically curate custom quests tailored to your performance.
+            </p>
+            <button
+              onClick={() => onNavigate('ai-interview')}
+              className="px-6 py-3 rounded-xl font-bold text-sm text-white bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 shadow-lg shadow-indigo-500/25 active:scale-95 transition"
+            >
+              🤖 Take an AI Interview Round
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {quests.map((q) => {
+              const milestones = q.milestones || [];
+              const completedCount = milestones.filter((m) => m.completed).length;
+              const pct = milestones.length > 0 ? Math.round((completedCount / milestones.length) * 100) : 0;
+              const isFinished = q.status === 'COMPLETED';
 
-            return (
-              <div
-                key={q.id}
-                className={`bg-white rounded-2xl p-6 shadow-md border transition ${
-                  isFinished ? 'border-emerald-300 bg-emerald-50/30' : 'border-gray-200'
-                }`}
-              >
-                <div className="flex justify-between items-start mb-3">
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xs font-black uppercase px-2.5 py-0.5 rounded bg-indigo-100 text-indigo-700">
-                        {q.category} Quest
-                      </span>
-                      {isFinished && (
-                        <span className="text-xs font-black uppercase px-2.5 py-0.5 rounded bg-emerald-100 text-emerald-800">
-                          ✓ Completed (+{q.xpReward} XP)
+              return (
+                <div
+                  key={q.id}
+                  className={`bg-slate-900/90 rounded-2xl p-6 shadow-xl border transition-all ${
+                    isFinished
+                      ? 'border-emerald-500/40 bg-emerald-950/20'
+                      : 'border-slate-800 hover:border-slate-700'
+                  }`}
+                >
+                  <div className="flex justify-between items-start mb-4">
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-xs font-black uppercase px-2.5 py-0.5 rounded-md bg-indigo-500/20 border border-indigo-500/30 text-indigo-300">
+                          {q.category} Quest
                         </span>
-                      )}
+                        {isFinished && (
+                          <span className="text-xs font-black uppercase px-2.5 py-0.5 rounded-md bg-emerald-500/20 border border-emerald-500/30 text-emerald-400">
+                            ✓ Completed (+{q.xpReward} XP)
+                          </span>
+                        )}
+                      </div>
+                      <h2 className="text-xl font-black text-white">{q.title}</h2>
+                      <p className="text-xs text-slate-400 mt-1">{q.description}</p>
                     </div>
-                    <h2 className="text-xl font-black text-gray-900">{q.title}</h2>
-                    <p className="text-xs text-gray-500 mt-0.5">{q.description}</p>
+
+                    <div className="text-right">
+                      <span className="text-3xl font-black text-indigo-400">{pct}%</span>
+                      <span className="text-xs text-slate-500 block font-semibold">Progress</span>
+                    </div>
                   </div>
 
-                  <div className="text-right">
-                    <span className="text-2xl font-black text-indigo-600">{pct}%</span>
-                    <span className="text-xs text-gray-400 block font-semibold">Progress</span>
-                  </div>
-                </div>
-
-                {/* Progress bar */}
-                <div className="w-full bg-gray-100 rounded-full h-2 mb-5">
-                  <div
-                    className={`h-2 rounded-full transition-all ${isFinished ? 'bg-emerald-500' : 'bg-indigo-600'}`}
-                    style={{ width: `${pct}%` }}
-                  />
-                </div>
-
-                {/* Milestones list */}
-                <div className="space-y-2 mb-4">
-                  {milestones.map((m) => (
-                    <button
-                      key={m.step}
-                      onClick={() => toggleMilestone(q.id, m.step)}
-                      className={`w-full text-left p-3 rounded-xl border text-xs flex items-center justify-between transition ${
-                        m.completed
-                          ? 'bg-emerald-50 border-emerald-200 text-emerald-900 font-semibold'
-                          : 'bg-slate-50 border-gray-200 text-gray-700 hover:bg-indigo-50'
+                  {/* Progress bar */}
+                  <div className="w-full bg-slate-800/80 rounded-full h-2.5 mb-5 overflow-hidden">
+                    <div
+                      className={`h-2.5 rounded-full transition-all duration-500 ${
+                        isFinished
+                          ? 'bg-gradient-to-r from-emerald-500 to-teal-400'
+                          : 'bg-gradient-to-r from-indigo-500 to-violet-500'
                       }`}
-                    >
-                      <div className="flex items-center gap-3">
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+
+                  {/* Milestones list */}
+                  <div className="space-y-2 mb-4">
+                    {milestones.map((m) => (
+                      <button
+                        key={m.step}
+                        onClick={() => toggleMilestone(q.id, m.step)}
+                        className={`w-full text-left p-3.5 rounded-xl border text-xs flex items-center justify-between transition-all ${
+                          m.completed
+                            ? 'bg-emerald-950/30 border-emerald-500/30 text-emerald-300 font-semibold'
+                            : 'bg-slate-950/60 border-slate-800 text-slate-300 hover:border-indigo-500/50 hover:bg-slate-800/60'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <span
+                            className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-[11px] ${
+                              m.completed
+                                ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20'
+                                : 'border border-slate-700 bg-slate-800 text-slate-400'
+                            }`}
+                          >
+                            {m.completed ? '✓' : m.step}
+                          </span>
+                          <span>{m.text}</span>
+                        </div>
                         <span
-                          className={`w-5 h-5 rounded-full flex items-center justify-center font-bold text-[10px] ${
-                            m.completed ? 'bg-emerald-500 text-white' : 'border border-gray-300 text-gray-400'
+                          className={`text-[10px] font-bold ${
+                            m.completed ? 'text-emerald-400' : 'text-slate-500'
                           }`}
                         >
-                          {m.completed ? '✓' : m.step}
+                          {m.completed ? 'Done' : 'Click to complete'}
                         </span>
-                        <span>{m.text}</span>
-                      </div>
-                      <span className="text-[10px] font-bold text-gray-400">
-                        {m.completed ? 'Done' : 'Click to complete'}
-                      </span>
-                    </button>
-                  ))}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-    </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </FullScreenShell>
   );
 };

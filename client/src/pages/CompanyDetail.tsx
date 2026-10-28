@@ -1,16 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { apiClient } from '../services/api';
 import { CompanyPrep } from './CompanyPrep';
+import { FullScreenShell } from '../components/FullScreenShell';
 
 // Tabbed CompanyDetail — one place for the four company-scoped things a
 // student needs before an interview. The Overview tab reuses the CompanyPrep
 // component (readiness + pattern-mock CTAs); Coding / Technical / HR are
 // backed by /companies/:slug/detail.
-//
-// Data model:
-//   coding    → verified CodingProblems tagged with this company slug
-//   technical → CompanyQuestion rows (concept-based, non-coding), grouped by subject
-//   hr        → HrQuestion rows with the company slug in companyTags
 
 interface CodingItem {
   id: string;
@@ -62,29 +58,27 @@ interface Detail {
 type Tab = 'overview' | 'coding' | 'technical' | 'hr';
 
 const SUBJECT_META: Record<string, { icon: string; label: string; color: string }> = {
-  OOPS: { icon: '🧱', label: 'OOP', color: 'bg-indigo-100 text-indigo-800' },
-  OS: { icon: '🖥️', label: 'Operating Systems', color: 'bg-emerald-100 text-emerald-800' },
-  DBMS: { icon: '🗄️', label: 'DBMS & SQL', color: 'bg-amber-100 text-amber-800' },
-  CN: { icon: '🌐', label: 'Computer Networks', color: 'bg-sky-100 text-sky-800' },
-  DSA: { icon: '📊', label: 'Data Structures & Algorithms', color: 'bg-fuchsia-100 text-fuchsia-800' },
-  SYSTEM_DESIGN: { icon: '🏗️', label: 'System Design', color: 'bg-rose-100 text-rose-800' },
+  OOPS: { icon: '🧱', label: 'OOP', color: 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30' },
+  OS: { icon: '🖥️', label: 'Operating Systems', color: 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' },
+  DBMS: { icon: '🗄️', label: 'DBMS & SQL', color: 'bg-amber-500/20 text-amber-300 border border-amber-500/30' },
+  CN: { icon: '🌐', label: 'Computer Networks', color: 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30' },
+  DSA: { icon: '📊', label: 'Data Structures & Algorithms', color: 'bg-fuchsia-500/20 text-fuchsia-300 border border-fuchsia-500/30' },
+  SYSTEM_DESIGN: { icon: '🏗️', label: 'System Design', color: 'bg-rose-500/20 text-rose-300 border border-rose-500/30' },
 };
 
 const DIFFICULTY_COLOR: Record<string, string> = {
-  easy: 'text-emerald-600',
-  medium: 'text-amber-600',
-  hard: 'text-rose-600',
-  EASY: 'text-emerald-600',
-  MEDIUM: 'text-amber-600',
-  HARD: 'text-rose-600',
+  easy: 'text-emerald-400',
+  medium: 'text-amber-400',
+  hard: 'text-rose-400',
+  EASY: 'text-emerald-400',
+  MEDIUM: 'text-amber-400',
+  HARD: 'text-rose-400',
 };
 
-// Tiny markdown-ish renderer: **bold**, `code`, newlines → <br>, and single-line
-// bullets. Deliberately narrow — we control the source content.
+// Tiny markdown-ish renderer: **bold**, `code`, newlines → <br>, and single-line bullets.
 const renderMarkdown = (text: string): React.ReactNode => {
   const lines = text.split('\n');
   return lines.map((line, i) => {
-    // bullets
     const isBullet = /^\s*[-*]\s+/.test(line);
     const body = isBullet ? line.replace(/^\s*[-*]\s+/, '') : line;
     const parts: React.ReactNode[] = [];
@@ -98,54 +92,136 @@ const renderMarkdown = (text: string): React.ReactNode => {
         parts.push(remaining);
         break;
       }
-      if (m.index! > 0) parts.push(remaining.slice(0, m.index));
-      if (m === boldM) parts.push(<strong key={key++}>{m[1]}</strong>);
-      else parts.push(<code key={key++} className="bg-gray-100 rounded px-1 text-[0.85em] font-mono">{m[1]}</code>);
+      if (m.index! > 0) {
+        parts.push(remaining.slice(0, m.index!));
+      }
+      if (m[0].startsWith('**')) {
+        parts.push(
+          <strong key={key++} className="font-bold text-white">
+            {m[1]}
+          </strong>
+        );
+      } else {
+        parts.push(
+          <code key={key++} className="bg-slate-800 text-indigo-300 px-1 py-0.5 rounded text-[11px] font-mono">
+            {m[1]}
+          </code>
+        );
+      }
       remaining = remaining.slice(m.index! + m[0].length);
     }
-    if (isBullet) return <li key={i} className="ml-5 list-disc">{parts}</li>;
+    if (isBullet) {
+      return (
+        <div key={i} className="flex gap-2 text-xs text-slate-300 my-0.5">
+          <span className="text-indigo-400 font-bold">•</span>
+          <span>{parts}</span>
+        </div>
+      );
+    }
     return (
-      <React.Fragment key={i}>
+      <p key={i} className="text-xs text-slate-300 my-1 leading-relaxed">
         {parts}
-        {i < lines.length - 1 && <br />}
-      </React.Fragment>
+      </p>
     );
   });
 };
 
-export const CompanyDetail: React.FC<{
+export interface CompanyDetailProps {
   slug: string;
+  user?: {
+    id?: string;
+    name?: string;
+    role?: string;
+    level?: number;
+    xpTotal?: number;
+    streakDays?: number;
+  } | null;
   onBack: () => void;
   onStartTest: (testId: string) => void;
   onStartInterview: (role: string, companyId: string) => void;
-  onOpenProblem: (slug: string) => void;
+  onOpenProblem: (problemSlug: string) => void;
   onPracticeHr: (question: HrQuestion, companySlug: string) => void;
-}> = ({ slug, onBack, onStartTest, onStartInterview, onOpenProblem, onPracticeHr }) => {
+  onNavigate?: (page: string) => void;
+  onLogout?: () => void;
+}
+
+export const CompanyDetail: React.FC<CompanyDetailProps> = ({
+  slug,
+  user,
+  onBack,
+  onStartTest,
+  onStartInterview,
+  onOpenProblem,
+  onPracticeHr,
+  onNavigate,
+  onLogout,
+}) => {
   const [detail, setDetail] = useState<Detail | null>(null);
-  const [tab, setTab] = useState<Tab>(() => (sessionStorage.getItem('companyDetailTab') as Tab) || 'overview');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [expandedTechnical, setExpandedTechnical] = useState<Set<string>>(new Set());
-  const [expandedHr, setExpandedHr] = useState<Set<string>>(new Set());
+  const [tab, setTab] = useState<Tab>('overview');
+
   const [techSubjectFilter, setTechSubjectFilter] = useState<string | null>(null);
   const [hrCategoryFilter, setHrCategoryFilter] = useState<string | null>(null);
-
-  useEffect(() => {
-    sessionStorage.setItem('companyDetailTab', tab);
-  }, [tab]);
+  const [expandedTechnical, setExpandedTechnical] = useState<Set<string>>(new Set());
+  const [expandedHr, setExpandedHr] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     setLoading(true);
+    setError(null);
     apiClient
       .get<Detail>(`/companies/${slug}/detail`)
-      .then((d) => setDetail(d))
-      .catch(() => setError('Failed to load company detail'))
+      .then(setDetail)
+      .catch((e) => setError(e?.message || 'Failed to load company detail'))
       .finally(() => setLoading(false));
   }, [slug]);
 
-  if (loading) return <div className="text-gray-500 italic p-8 text-center">Loading…</div>;
-  if (error && !detail) return <div className="bg-red-100 text-red-700 p-4 rounded-lg">{error}</div>;
-  if (!detail) return null;
+  const nav = onNavigate || (() => {});
+
+  if (loading) {
+    return (
+      <FullScreenShell
+        title="Loading Company…"
+        subtitle="Hiring workflow and question bank"
+        icon="🏢"
+        currentPage="company-prep"
+        user={user}
+        onNavigate={nav}
+        onBack={onBack}
+        onLogout={onLogout}
+      >
+        <div className="flex flex-col items-center justify-center p-16 gap-3">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-500"></div>
+          <p className="text-xs text-slate-400 font-bold">Loading company profile & questions…</p>
+        </div>
+      </FullScreenShell>
+    );
+  }
+
+  if (error || !detail) {
+    return (
+      <FullScreenShell
+        title="Company Not Found"
+        subtitle="Target company workspace"
+        icon="🏢"
+        currentPage="company-prep"
+        user={user}
+        onNavigate={nav}
+        onBack={onBack}
+        onLogout={onLogout}
+      >
+        <div className="max-w-xl mx-auto text-center py-12 bg-slate-900 border border-slate-800 rounded-3xl p-8 shadow-xl my-8">
+          <p className="text-rose-400 font-bold mb-4">{error || 'Company not found'}</p>
+          <button
+            onClick={onBack}
+            className="px-6 py-2.5 rounded-xl font-bold text-xs bg-indigo-600 hover:bg-indigo-500 text-white transition cursor-pointer"
+          >
+            ← Back to Companies
+          </button>
+        </div>
+      </FullScreenShell>
+    );
+  }
 
   const subjects = Object.keys(detail.technical.bySubject);
   const visibleTechnical = techSubjectFilter
@@ -153,7 +229,9 @@ export const CompanyDetail: React.FC<{
     : detail.technical.bySubject;
 
   const hrCategories = Array.from(new Set(detail.hr.map((q) => q.category)));
-  const visibleHr = hrCategoryFilter ? detail.hr.filter((q) => q.category === hrCategoryFilter) : detail.hr;
+  const visibleHr = hrCategoryFilter
+    ? detail.hr.filter((q) => q.category === hrCategoryFilter)
+    : detail.hr;
 
   const toggleTech = (id: string) => {
     const next = new Set(expandedTechnical);
@@ -172,17 +250,17 @@ export const CompanyDetail: React.FC<{
     <button
       key={id}
       onClick={() => setTab(id)}
-      className={`px-4 py-2 font-bold text-sm rounded-t-lg transition-colors border-b-2 ${
+      className={`px-4 py-2 font-bold text-xs sm:text-sm rounded-xl transition-all cursor-pointer flex items-center gap-1.5 ${
         tab === id
-          ? 'text-indigo-700 border-indigo-600 bg-white'
-          : 'text-gray-500 border-transparent hover:text-indigo-600'
+          ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-900/50'
+          : 'text-slate-400 hover:text-white bg-slate-900/60 hover:bg-slate-850'
       }`}
     >
-      {label}
+      <span>{label}</span>
       {badge != null && (
         <span
-          className={`ml-2 text-xs font-black px-1.5 py-0.5 rounded ${
-            tab === id ? 'bg-indigo-100 text-indigo-800' : 'bg-gray-200 text-gray-700'
+          className={`ml-1 text-[10px] font-black px-1.5 py-0.2 rounded-full ${
+            tab === id ? 'bg-indigo-800/80 text-indigo-200' : 'bg-slate-800 text-slate-400'
           }`}
         >
           {badge}
@@ -192,236 +270,263 @@ export const CompanyDetail: React.FC<{
   );
 
   return (
-    <div>
-      {/* Sticky-style header with tabs. Overview keeps its own back button, so
-          on the Overview tab we hide the outer back to avoid double-backs. */}
-      {tab !== 'overview' && (
-        <button onClick={onBack} className="text-indigo-600 hover:text-indigo-800 font-bold mb-4">
-          ← Back
-        </button>
-      )}
-
-      {tab !== 'overview' && (
-        <div className="flex items-center gap-3 mb-4">
-          {detail.company.logoUrl && (
-            <img src={detail.company.logoUrl} alt="" className="w-10 h-10 rounded bg-white p-1 border" />
-          )}
-          <h1 className="text-2xl font-black text-gray-800">{detail.company.name}</h1>
+    <FullScreenShell
+      title={detail.company.name}
+      subtitle="Recruitment pattern, technical question bank & mock drills"
+      icon="🏢"
+      currentPage="company-prep"
+      user={user}
+      onNavigate={nav}
+      onBack={onBack}
+      onLogout={onLogout}
+    >
+      <div className="max-w-5xl mx-auto flex flex-col gap-6">
+        {/* TABS SELECTOR */}
+        <div className="flex gap-2 bg-slate-900/90 border border-slate-800 p-2 rounded-2xl shadow-lg shadow-slate-950/40 overflow-x-auto scrollbar-none">
+          {tabButton('overview', '📊 Overview & Readiness')}
+          {tabButton('coding', '💻 Coding Questions', detail.coding.length)}
+          {tabButton('technical', '🧠 Technical Round', detail.technical.total)}
+          {tabButton('hr', '🤝 HR Behavioral', detail.hr.length)}
         </div>
-      )}
 
-      <div className="flex gap-1 border-b border-gray-200 mb-6 overflow-x-auto">
-        {tabButton('overview', '📊 Overview')}
-        {tabButton('coding', '💻 Coding', detail.coding.length)}
-        {tabButton('technical', '🧠 Technical', detail.technical.total)}
-        {tabButton('hr', '🤝 HR', detail.hr.length)}
-      </div>
+        {tab === 'overview' && (
+          <CompanyPrep
+            slug={slug}
+            onBack={onBack}
+            onStartTest={onStartTest}
+            onStartInterview={onStartInterview}
+          />
+        )}
 
-      {tab === 'overview' && (
-        <CompanyPrep
-          slug={slug}
-          onBack={onBack}
-          onStartTest={onStartTest}
-          onStartInterview={onStartInterview}
-        />
-      )}
-
-      {tab === 'coding' && (
-        <div>
-          {detail.coding.length === 0 ? (
-            <div className="bg-white rounded-xl shadow p-6 text-center text-gray-500">
-              No coding problems are currently tagged for {detail.company.name}. Try the general{' '}
-              <span className="font-bold text-indigo-600">Coding Tracks</span> in the left nav.
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {detail.coding.map((p) => (
-                <button
-                  key={p.id}
-                  onClick={() => onOpenProblem(p.slug)}
-                  className="text-left bg-white rounded-xl shadow p-4 hover:shadow-md hover:ring-2 hover:ring-indigo-200 transition"
-                >
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="font-black text-gray-800">{p.title}</span>
-                    {p.solved ? (
-                      <span className="text-xs font-bold text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded-full">
-                        ✓ Solved{p.bestScore != null ? ` · ${Math.round(p.bestScore)}%` : ''}
-                      </span>
-                    ) : (
-                      <span className={`text-xs font-bold ${DIFFICULTY_COLOR[p.difficulty] || 'text-gray-500'}`}>
-                        {p.difficulty}
-                      </span>
-                    )}
-                  </div>
-                  <div className="text-xs text-gray-500">
-                    {p.topic.name} · L{p.level}
-                    {p.track && p.track !== p.topic.slug ? ` · track: ${p.track}` : ''}
-                  </div>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {tab === 'technical' && (
-        <div>
-          {detail.technical.total === 0 ? (
-            <div className="bg-white rounded-xl shadow p-6 text-center text-gray-500">
-              No technical questions authored for {detail.company.name} yet.
-            </div>
-          ) : (
-            <>
-              {subjects.length > 1 && (
-                <div className="flex gap-2 flex-wrap mb-4">
+        {tab === 'coding' && (
+          <div className="space-y-4">
+            {detail.coding.length === 0 ? (
+              <div className="bg-slate-900/90 rounded-2xl border border-slate-800 shadow p-8 text-center text-slate-400 text-xs">
+                No coding problems are currently tagged specifically for {detail.company.name}. Try the general{' '}
+                <span className="font-bold text-indigo-400">Coding Tracks</span> in the navigation drawer.
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {detail.coding.map((p) => (
                   <button
-                    onClick={() => setTechSubjectFilter(null)}
-                    className={`text-xs font-bold px-3 py-1 rounded-full ${
-                      techSubjectFilter === null ? 'bg-indigo-600 text-white' : 'bg-white border text-gray-600'
-                    }`}
+                    key={p.id}
+                    onClick={() => onOpenProblem(p.slug)}
+                    className="text-left bg-slate-900/90 border border-slate-800 hover:border-indigo-500/50 rounded-2xl shadow-lg shadow-slate-950/40 p-5 hover:-translate-y-0.5 transition cursor-pointer group"
                   >
-                    All ({detail.technical.total})
-                  </button>
-                  {subjects.map((s) => {
-                    const meta = SUBJECT_META[s] || { icon: '📌', label: s, color: 'bg-gray-100 text-gray-700' };
-                    return (
-                      <button
-                        key={s}
-                        onClick={() => setTechSubjectFilter(s)}
-                        className={`text-xs font-bold px-3 py-1 rounded-full ${
-                          techSubjectFilter === s ? 'bg-indigo-600 text-white' : 'bg-white border text-gray-600'
-                        }`}
-                      >
-                        {meta.icon} {meta.label} ({detail.technical.bySubject[s].length})
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-
-              {Object.entries(visibleTechnical).map(([subject, questions]) => {
-                const meta = SUBJECT_META[subject] || { icon: '📌', label: subject, color: 'bg-gray-100 text-gray-700' };
-                return (
-                  <div key={subject} className="mb-6">
-                    <h3 className={`inline-flex items-center gap-2 text-sm font-black px-3 py-1 rounded-full mb-3 ${meta.color}`}>
-                      <span>{meta.icon}</span> {meta.label}
-                    </h3>
-                    <div className="space-y-2">
-                      {questions.map((q) => {
-                        const open = expandedTechnical.has(q.id);
-                        return (
-                          <div key={q.id} className="bg-white rounded-xl shadow">
-                            <button
-                              onClick={() => toggleTech(q.id)}
-                              className="w-full text-left px-4 py-3 flex items-start gap-3"
-                            >
-                              <span className="mt-0.5 text-indigo-500 font-black">{open ? '▾' : '▸'}</span>
-                              <div className="flex-1">
-                                <div className="font-semibold text-gray-800">{q.question}</div>
-                                <div className="mt-1 flex gap-2 items-center text-[11px]">
-                                  <span className={`font-bold ${DIFFICULTY_COLOR[q.difficulty] || 'text-gray-500'}`}>
-                                    {q.difficulty}
-                                  </span>
-                                  {q.tags.slice(0, 3).map((t) => (
-                                    <span key={t} className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
-                                      {t}
-                                    </span>
-                                  ))}
-                                </div>
-                              </div>
-                            </button>
-                            {open && q.answerHint && (
-                              <div className="px-4 pb-4 pt-1 border-t border-gray-100 text-sm text-gray-700 leading-relaxed">
-                                <div className="text-[11px] font-bold text-indigo-600 uppercase mb-2">
-                                  Talking points
-                                </div>
-                                {renderMarkdown(q.answerHint)}
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-bold text-white group-hover:text-indigo-300 transition text-sm">
+                        {p.title}
+                      </span>
+                      {p.solved ? (
+                        <span className="text-[10px] font-bold text-emerald-300 bg-emerald-500/20 border border-emerald-500/30 px-2 py-0.5 rounded-full">
+                          ✓ Solved{p.bestScore != null ? ` · ${Math.round(p.bestScore)}%` : ''}
+                        </span>
+                      ) : (
+                        <span
+                          className={`text-[10px] font-bold uppercase ${
+                            DIFFICULTY_COLOR[p.difficulty] || 'text-slate-400'
+                          }`}
+                        >
+                          {p.difficulty}
+                        </span>
+                      )}
                     </div>
-                  </div>
-                );
-              })}
-            </>
-          )}
-        </div>
-      )}
-
-      {tab === 'hr' && (
-        <div>
-          {detail.hr.length === 0 ? (
-            <div className="bg-white rounded-xl shadow p-6 text-center text-gray-500">
-              No HR prompts tagged for {detail.company.name}. Browse the general{' '}
-              <span className="font-bold text-indigo-600">HR Prep</span> bank in the left nav.
-            </div>
-          ) : (
-            <>
-              {hrCategories.length > 1 && (
-                <div className="flex gap-2 flex-wrap mb-4">
-                  <button
-                    onClick={() => setHrCategoryFilter(null)}
-                    className={`text-xs font-bold px-3 py-1 rounded-full ${
-                      hrCategoryFilter === null ? 'bg-indigo-600 text-white' : 'bg-white border text-gray-600'
-                    }`}
-                  >
-                    All ({detail.hr.length})
+                    <div className="text-xs text-slate-400">
+                      {p.topic.name} · Level {p.level}
+                      {p.track && p.track !== p.topic.slug ? ` · track: ${p.track}` : ''}
+                    </div>
                   </button>
-                  {hrCategories.map((c) => (
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {tab === 'technical' && (
+          <div className="space-y-4">
+            {detail.technical.total === 0 ? (
+              <div className="bg-slate-900/90 rounded-2xl border border-slate-800 shadow p-8 text-center text-slate-400 text-xs">
+                No technical questions authored for {detail.company.name} yet.
+              </div>
+            ) : (
+              <>
+                {subjects.length > 1 && (
+                  <div className="flex gap-2 flex-wrap mb-4">
                     <button
-                      key={c}
-                      onClick={() => setHrCategoryFilter(c)}
-                      className={`text-xs font-bold px-3 py-1 rounded-full ${
-                        hrCategoryFilter === c ? 'bg-indigo-600 text-white' : 'bg-white border text-gray-600'
+                      onClick={() => setTechSubjectFilter(null)}
+                      className={`text-xs font-bold px-3 py-1 rounded-xl transition cursor-pointer ${
+                        techSubjectFilter === null
+                          ? 'bg-indigo-600 text-white shadow-md shadow-indigo-900/40'
+                          : 'bg-slate-800 border border-slate-700 text-slate-300 hover:bg-slate-700'
                       }`}
                     >
-                      {c} ({detail.hr.filter((h) => h.category === c).length})
+                      All ({detail.technical.total})
                     </button>
-                  ))}
-                </div>
-              )}
-              <div className="space-y-2">
-                {visibleHr.map((q) => {
-                  const open = expandedHr.has(q.id);
+                    {subjects.map((s) => {
+                      const meta = SUBJECT_META[s] || { icon: '📌', label: s, color: 'bg-slate-800 text-slate-300' };
+                      return (
+                        <button
+                          key={s}
+                          onClick={() => setTechSubjectFilter(s)}
+                          className={`text-xs font-bold px-3 py-1 rounded-xl transition cursor-pointer flex items-center gap-1.5 ${
+                            techSubjectFilter === s
+                              ? 'bg-indigo-600 text-white shadow-md shadow-indigo-900/40'
+                              : 'bg-slate-800 border border-slate-700 text-slate-300 hover:bg-slate-700'
+                          }`}
+                        >
+                          <span>{meta.icon}</span> <span>{meta.label}</span> ({detail.technical.bySubject[s].length})
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {Object.entries(visibleTechnical).map(([subject, questions]) => {
+                  const meta = SUBJECT_META[subject] || { icon: '📌', label: subject, color: 'bg-slate-800 text-slate-300' };
                   return (
-                    <div key={q.id} className="bg-white rounded-xl shadow">
-                      <button onClick={() => toggleHr(q.id)} className="w-full text-left px-4 py-3 flex items-start gap-3">
-                        <span className="mt-0.5 text-indigo-500 font-black">{open ? '▾' : '▸'}</span>
-                        <div className="flex-1">
-                          <div className="font-semibold text-gray-800">{q.question}</div>
-                          <div className="mt-1 text-[11px] text-gray-500 uppercase font-bold">{q.category}</div>
-                        </div>
-                      </button>
-                      {open && (
-                        <div className="px-4 pb-4 pt-1 border-t border-gray-100 text-sm text-gray-700 leading-relaxed space-y-3">
-                          <div>
-                            <div className="text-[11px] font-bold text-indigo-600 uppercase mb-1">STAR Guidance</div>
-                            {renderMarkdown(q.starGuidance)}
-                          </div>
-                          {q.sampleOutline && (
-                            <div>
-                              <div className="text-[11px] font-bold text-emerald-600 uppercase mb-1">Answer Outline</div>
-                              {renderMarkdown(q.sampleOutline)}
+                    <div key={subject} className="mb-6">
+                      <div className="mb-3">
+                        <span className={`inline-flex items-center gap-1.5 text-xs font-black px-3 py-1 rounded-full ${meta.color}`}>
+                          <span>{meta.icon}</span> {meta.label}
+                        </span>
+                      </div>
+                      <div className="space-y-2">
+                        {questions.map((q) => {
+                          const open = expandedTechnical.has(q.id);
+                          return (
+                            <div
+                              key={q.id}
+                              className="bg-slate-900/90 border border-slate-800 rounded-2xl shadow-lg shadow-slate-950/40 overflow-hidden"
+                            >
+                              <button
+                                onClick={() => toggleTech(q.id)}
+                                className="w-full text-left px-5 py-4 flex items-start gap-3 hover:bg-slate-800/40 transition cursor-pointer"
+                              >
+                                <span className="mt-0.5 text-indigo-400 font-black text-sm">{open ? '▾' : '▸'}</span>
+                                <div className="flex-1">
+                                  <div className="font-semibold text-white text-sm leading-relaxed">{q.question}</div>
+                                  <div className="mt-1.5 flex gap-2 items-center text-[10px]">
+                                    <span className={`font-bold uppercase ${DIFFICULTY_COLOR[q.difficulty] || 'text-slate-400'}`}>
+                                      {q.difficulty}
+                                    </span>
+                                    {q.tags.slice(0, 3).map((t) => (
+                                      <span key={t} className="bg-slate-800 border border-slate-700 text-slate-300 px-2 py-0.2 rounded-md">
+                                        {t}
+                                      </span>
+                                    ))}
+                                  </div>
+                                </div>
+                              </button>
+                              {open && q.answerHint && (
+                                <div className="px-5 pb-5 pt-2 border-t border-slate-800/80 text-xs text-slate-300 leading-relaxed bg-slate-950/40">
+                                  <div className="text-[10px] font-black text-indigo-400 uppercase tracking-wider mb-2">
+                                    💡 Key Talking Points
+                                  </div>
+                                  {renderMarkdown(q.answerHint)}
+                                </div>
+                              )}
                             </div>
-                          )}
-                          <button
-                            onClick={() => onPracticeHr(q, detail.company.slug)}
-                            className="text-xs font-bold px-3 py-2 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-600 text-white"
-                          >
-                            🎤 Practice with AI
-                          </button>
-                        </div>
-                      )}
+                          );
+                        })}
+                      </div>
                     </div>
                   );
                 })}
+              </>
+            )}
+          </div>
+        )}
+
+        {tab === 'hr' && (
+          <div className="space-y-4">
+            {detail.hr.length === 0 ? (
+              <div className="bg-slate-900/90 rounded-2xl border border-slate-800 shadow p-8 text-center text-slate-400 text-xs">
+                No HR prompts tagged for {detail.company.name}. Browse the general{' '}
+                <span className="font-bold text-indigo-400">HR Prep</span> bank in the drawer.
               </div>
-            </>
-          )}
-        </div>
-      )}
-    </div>
+            ) : (
+              <>
+                {hrCategories.length > 1 && (
+                  <div className="flex gap-2 flex-wrap mb-4">
+                    <button
+                      onClick={() => setHrCategoryFilter(null)}
+                      className={`text-xs font-bold px-3 py-1 rounded-xl transition cursor-pointer ${
+                        hrCategoryFilter === null
+                          ? 'bg-indigo-600 text-white shadow-md shadow-indigo-900/40'
+                          : 'bg-slate-800 border border-slate-700 text-slate-300 hover:bg-slate-700'
+                      }`}
+                    >
+                      All ({detail.hr.length})
+                    </button>
+                    {hrCategories.map((c) => (
+                      <button
+                        key={c}
+                        onClick={() => setHrCategoryFilter(c)}
+                        className={`text-xs font-bold px-3 py-1 rounded-xl transition cursor-pointer ${
+                          hrCategoryFilter === c
+                            ? 'bg-indigo-600 text-white shadow-md shadow-indigo-900/40'
+                            : 'bg-slate-800 border border-slate-700 text-slate-300 hover:bg-slate-700'
+                        }`}
+                      >
+                        {c} ({detail.hr.filter((h) => h.category === c).length})
+                      </button>
+                    ))}
+                  </div>
+                )}
+                <div className="space-y-2">
+                  {visibleHr.map((q) => {
+                    const open = expandedHr.has(q.id);
+                    return (
+                      <div
+                        key={q.id}
+                        className="bg-slate-900/90 border border-slate-800 rounded-2xl shadow-lg shadow-slate-950/40 overflow-hidden"
+                      >
+                        <button
+                          onClick={() => toggleHr(q.id)}
+                          className="w-full text-left px-5 py-4 flex items-start gap-3 hover:bg-slate-800/40 transition cursor-pointer"
+                        >
+                          <span className="mt-0.5 text-indigo-400 font-black text-sm">{open ? '▾' : '▸'}</span>
+                          <div className="flex-1">
+                            <div className="font-semibold text-white text-sm leading-relaxed">{q.question}</div>
+                            <div className="mt-1 text-[10px] text-indigo-400 uppercase font-bold tracking-wider">
+                              {q.category}
+                            </div>
+                          </div>
+                        </button>
+                        {open && (
+                          <div className="px-5 pb-5 pt-2 border-t border-slate-800/80 text-xs text-slate-300 leading-relaxed space-y-4 bg-slate-950/40">
+                            <div>
+                              <div className="text-[10px] font-black text-indigo-400 uppercase tracking-wider mb-1.5">
+                                STAR Guidance
+                              </div>
+                              {renderMarkdown(q.starGuidance)}
+                            </div>
+                            {q.sampleOutline && (
+                              <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-3.5">
+                                <div className="text-[10px] font-black text-emerald-400 uppercase tracking-wider mb-1.5">
+                                  Answer Outline
+                                </div>
+                                {renderMarkdown(q.sampleOutline)}
+                              </div>
+                            )}
+                            <button
+                              onClick={() => onPracticeHr(q, detail.company.slug)}
+                              className="text-xs font-bold px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white shadow-md shadow-emerald-900/40 transition active:scale-95 cursor-pointer flex items-center gap-1.5"
+                            >
+                              <span>🎤</span> Practice with AI
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+          </div>
+        )}
+      </div>
+    </FullScreenShell>
   );
 };
+export default CompanyDetail;

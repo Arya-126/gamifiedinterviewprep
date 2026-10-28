@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { apiClient } from '../services/api';
+import { FullScreenShell } from '../components/FullScreenShell';
 
 interface TheoryData {
   id: string;
@@ -10,14 +11,32 @@ interface TheoryData {
   tutorialSections: { heading: string; content: string | string[] }[];
 }
 
-interface Props {
+export interface InterviewTheoryProps {
   topicId: string;
+  user?: {
+    id?: string;
+    name?: string;
+    role?: string;
+    level?: number;
+    xpTotal?: number;
+    streakDays?: number;
+  } | null;
   onReadyToPractice: () => void;
   onStudyGames?: () => void;
   onBack: () => void;
+  onNavigate?: (page: string) => void;
+  onLogout?: () => void;
 }
 
-export const InterviewTheory: React.FC<Props> = ({ topicId, onReadyToPractice, onStudyGames, onBack }) => {
+export const InterviewTheory: React.FC<InterviewTheoryProps> = ({
+  topicId,
+  user,
+  onReadyToPractice,
+  onStudyGames,
+  onBack,
+  onNavigate,
+  onLogout,
+}) => {
   const [theory, setTheory] = useState<TheoryData | null>(null);
   const [loading, setLoading] = useState(true);
   const [cleaning, setCleaning] = useState(false);
@@ -37,17 +56,22 @@ export const InterviewTheory: React.FC<Props> = ({ topicId, onReadyToPractice, o
     fetchTheory();
   }, [topicId]);
 
+  const nav = onNavigate || (() => {});
+
   const handleRefreshNotes = async () => {
     setCleaning(true);
     try {
       const data = await apiClient.post<any>('/interview/admin/cleanup-theory', { topicId });
-      // Update local state with cleaned data
-      setTheory(prev => prev ? {
-        ...prev,
-        keyPoints: data.keyPoints,
-        formulas: data.formulas,
-        tutorialSections: data.tutorialSections
-      } : null);
+      setTheory((prev) =>
+        prev
+          ? {
+              ...prev,
+              keyPoints: data.keyPoints,
+              formulas: data.formulas,
+              tutorialSections: data.tutorialSections,
+            }
+          : null
+      );
     } catch (e: any) {
       alert('Failed to clean up notes: ' + (e.error || e.message));
     } finally {
@@ -57,115 +81,162 @@ export const InterviewTheory: React.FC<Props> = ({ topicId, onReadyToPractice, o
 
   if (loading) {
     return (
-      <div className="flex justify-center p-12">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-      </div>
+      <FullScreenShell
+        title="Loading Notes…"
+        subtitle="Preparing topic theory"
+        icon="📖"
+        currentPage="interview-theory"
+        user={user}
+        onNavigate={nav}
+        onBack={onBack}
+        onLogout={onLogout}
+      >
+        <div className="flex flex-col items-center justify-center p-16 gap-3">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-500"></div>
+          <p className="text-xs text-slate-400 font-bold">Loading comprehensive theory notes…</p>
+        </div>
+      </FullScreenShell>
     );
   }
 
   if (error || !theory) {
     return (
-      <div className="max-w-4xl mx-auto text-center py-12">
-        <div className="bg-red-50 text-red-600 p-4 rounded-lg inline-block mb-4">
-          {error || 'Theory not found'}
-        </div>
-        <div>
-          <button onClick={onBack} className="text-indigo-600 font-bold hover:underline">
+      <FullScreenShell
+        title="Theory Notes"
+        subtitle="Topic study notes"
+        icon="📖"
+        currentPage="interview-theory"
+        user={user}
+        onNavigate={nav}
+        onBack={onBack}
+        onLogout={onLogout}
+      >
+        <div className="max-w-xl mx-auto text-center py-12 bg-slate-900 border border-slate-800 rounded-3xl p-8 shadow-xl my-8">
+          <div className="text-4xl mb-3">📚</div>
+          <div className="text-slate-300 text-sm font-semibold mb-6">
+            {error || 'Theory not available for this topic yet.'}
+          </div>
+          <button
+            onClick={onBack}
+            className="px-6 py-2.5 rounded-xl font-bold text-xs bg-indigo-600 hover:bg-indigo-500 text-white transition cursor-pointer"
+          >
             ← Back to Topics
           </button>
         </div>
-      </div>
+      </FullScreenShell>
     );
   }
 
   return (
-    <div className="max-w-4xl mx-auto pb-12">
-      <div className="flex items-center justify-between mb-8">
-        <div className="flex items-center">
-          <button onClick={onBack} className="mr-4 text-gray-500 hover:text-gray-800 transition">
-            <span className="text-2xl">←</span>
-          </button>
-          <h2 className="text-3xl font-bold text-gray-800">Study Notes</h2>
-        </div>
-        <button 
-          onClick={handleRefreshNotes} 
-          disabled={cleaning}
-          className="flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-600 rounded-lg font-semibold hover:bg-indigo-100 transition disabled:opacity-50"
-        >
-          {cleaning ? (
-            <>
-              <div className="animate-spin h-4 w-4 border-2 border-indigo-600 border-t-transparent rounded-full"></div>
-              <span>Cleaning...</span>
-            </>
-          ) : (
-            <>
-              <span>✨</span>
-              <span>Refresh Notes (AI)</span>
-            </>
-          )}
-        </button>
-      </div>
-
-      <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-8 mb-8">
-        {/* Key Points */}
-        {theory.keyPoints && theory.keyPoints.length > 0 && (
-          <div className="mb-8">
-            <h3 className="text-2xl font-bold text-indigo-700 mb-4 border-b pb-2">Key Points</h3>
-            <ul className="list-disc pl-5 space-y-2 text-gray-700">
-              {theory.keyPoints.map((point, idx) => (
-                <li key={idx}>{point}</li>
-              ))}
-            </ul>
+    <FullScreenShell
+      title="Study Notes & Theory"
+      subtitle="Formulas, key concepts & solved examples"
+      icon="📖"
+      currentPage="interview-theory"
+      user={user}
+      onNavigate={nav}
+      onBack={onBack}
+      onLogout={onLogout}
+    >
+      <div className="max-w-4xl mx-auto flex flex-col gap-6">
+        {/* TOP BAR WITH AI REFRESH */}
+        <div className="flex items-center justify-between flex-wrap gap-4 bg-slate-900/90 border border-slate-800 p-5 rounded-2xl shadow-lg shadow-slate-950/40">
+          <div>
+            <h2 className="text-xl font-black text-white">Comprehensive Theory Drill</h2>
+            <p className="text-xs text-slate-400 mt-0.5">High-yield revision notes & formulas for written rounds</p>
           </div>
-        )}
+          <button
+            onClick={handleRefreshNotes}
+            disabled={cleaning}
+            className="flex items-center gap-2 px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-indigo-300 hover:text-white border border-slate-700 rounded-xl text-xs font-bold transition active:scale-95 disabled:opacity-50 cursor-pointer"
+          >
+            {cleaning ? (
+              <>
+                <div className="animate-spin h-3.5 w-3.5 border-2 border-indigo-400 border-t-transparent rounded-full"></div>
+                <span>Regenerating Notes…</span>
+              </>
+            ) : (
+              <>
+                <span>✨</span>
+                <span>AI Enhance Notes</span>
+              </>
+            )}
+          </button>
+        </div>
 
-        {/* Formulas */}
-        {theory.formulas && theory.formulas.length > 0 && (
-          <div className="mb-8">
-            <h3 className="text-2xl font-bold text-emerald-700 mb-4 border-b pb-2">Important Formulas</h3>
-            <div className="bg-emerald-50 rounded-lg p-6 border border-emerald-100">
-              <ul className="list-disc pl-5 space-y-3 text-emerald-900 font-medium">
-                {theory.formulas.map((formula, idx) => (
-                  <li key={idx}>{formula}</li>
+        {/* CONTENT CARD */}
+        <div className="bg-slate-900/90 rounded-3xl shadow-xl shadow-slate-950/50 border border-slate-800 p-6 sm:p-8 space-y-8">
+          {/* Key Points */}
+          {theory.keyPoints && theory.keyPoints.length > 0 && (
+            <div>
+              <h3 className="text-lg font-black text-indigo-400 mb-3 border-b border-slate-800 pb-2 flex items-center gap-2">
+                <span>⚡</span> Key Placement Concepts
+              </h3>
+              <ul className="list-disc pl-5 space-y-2 text-slate-300 text-sm leading-relaxed">
+                {theory.keyPoints.map((point, idx) => (
+                  <li key={idx}>{point}</li>
                 ))}
               </ul>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Tutorial Sections */}
-        {theory.tutorialSections && theory.tutorialSections.map((section, idx) => (
-          <div key={idx} className="mb-8">
-            <h3 className="text-2xl font-bold text-gray-800 mb-4 border-b pb-2">{section.heading}</h3>
-            {Array.isArray(section.content) ? (
-              <ul className="list-disc pl-5 space-y-2 text-gray-700">
-                {section.content.map((item, itemIdx) => (
-                  <li key={itemIdx}>{item}</li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-gray-700 whitespace-pre-wrap">{section.content}</p>
-            )}
-          </div>
-        ))}
-      </div>
+          {/* Formulas */}
+          {theory.formulas && theory.formulas.length > 0 && (
+            <div>
+              <h3 className="text-lg font-black text-emerald-400 mb-3 border-b border-slate-800 pb-2 flex items-center gap-2">
+                <span>📐</span> High-Frequency Formulas
+              </h3>
+              <div className="bg-emerald-500/10 rounded-2xl p-5 border border-emerald-500/30">
+                <ul className="list-disc pl-5 space-y-2 text-emerald-200 text-sm font-mono leading-relaxed">
+                  {theory.formulas.map((formula, idx) => (
+                    <li key={idx}>{formula}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
 
-      <div className="flex flex-wrap justify-center gap-4">
-        <button
-          onClick={onReadyToPractice}
-          className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xl py-4 px-12 rounded-full shadow-lg transition transform hover:-translate-y-1"
-        >
-          🎮 Ready to Practice!
-        </button>
-        {onStudyGames && (
+          {/* Tutorial Sections */}
+          {theory.tutorialSections &&
+            theory.tutorialSections.map((section, idx) => (
+              <div key={idx}>
+                <h3 className="text-lg font-black text-white mb-3 border-b border-slate-800 pb-2 flex items-center gap-2">
+                  <span>📌</span> {section.heading}
+                </h3>
+                {Array.isArray(section.content) ? (
+                  <ul className="list-disc pl-5 space-y-2 text-slate-300 text-sm leading-relaxed">
+                    {section.content.map((item, itemIdx) => (
+                      <li key={itemIdx}>{item}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-slate-300 text-sm whitespace-pre-wrap leading-relaxed">
+                    {section.content}
+                  </p>
+                )}
+              </div>
+            ))}
+        </div>
+
+        {/* BOTTOM ACTION BUTTONS */}
+        <div className="flex flex-wrap justify-center gap-4 py-4">
           <button
-            onClick={onStudyGames}
-            className="bg-white hover:bg-emerald-50 text-emerald-700 border-2 border-emerald-500 font-bold text-xl py-4 px-12 rounded-full shadow-lg transition transform hover:-translate-y-1"
+            onClick={onReadyToPractice}
+            className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white font-black text-sm sm:text-base py-3.5 px-8 rounded-2xl shadow-xl shadow-emerald-900/40 transition active:scale-95 cursor-pointer flex items-center gap-2"
           >
-            🎮 Study with Games
+            <span>🎮</span> Ready to Practice (Quiz)
           </button>
-        )}
+          {onStudyGames && (
+            <button
+              onClick={onStudyGames}
+              className="bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700 font-bold text-sm sm:text-base py-3.5 px-8 rounded-2xl transition active:scale-95 cursor-pointer flex items-center gap-2"
+            >
+              <span>⚡</span> Study with Mini-Games
+            </button>
+          )}
+        </div>
       </div>
-    </div>
+    </FullScreenShell>
   );
 };
+export default InterviewTheory;

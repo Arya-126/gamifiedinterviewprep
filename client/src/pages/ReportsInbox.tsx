@@ -1,9 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { apiClient } from '../services/api';
-
-// Simple recent-reports list. Reachable via the LeftNav so users can
-// find their comprehensive reports even before every finish-screen has
-// been wired to link directly. Click a row → opens TestReport.
+import { FullScreenShell } from '../components/FullScreenShell';
 
 interface ReportRow {
   id: string;
@@ -21,9 +18,19 @@ const SOURCE_LABEL: Record<string, string> = {
   'coding-round': '⚡ Coding',
 };
 
-export const ReportsInbox: React.FC<{
+interface ReportsInboxProps {
   onOpen: (reportId: string) => void;
-}> = ({ onOpen }) => {
+  user?: any;
+  onNavigate?: (page: string) => void;
+  onLogout?: () => void;
+}
+
+export const ReportsInbox: React.FC<ReportsInboxProps> = ({
+  onOpen,
+  user,
+  onNavigate = () => {},
+  onLogout,
+}) => {
   const [rows, setRows] = useState<ReportRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -34,55 +41,95 @@ export const ReportsInbox: React.FC<{
       .catch(() => setError('Failed to load reports'));
   }, []);
 
-  if (error) return <div className="max-w-2xl mx-auto py-10 text-red-700">{error}</div>;
-  if (rows === null) return <div className="max-w-2xl mx-auto py-16 text-center text-gray-400 animate-pulse">Loading…</div>;
-
   return (
-    <div className="max-w-3xl mx-auto py-6">
-      <h1 className="text-2xl font-black text-gray-900 mb-1">Comprehensive Reports</h1>
-      <p className="text-sm text-gray-500 mb-6">
-        Detailed analysis of every quiz and interview — with per-mistake explanations
-        and AI-generated synopses for weak concepts.
-      </p>
+    <FullScreenShell
+      title="Performance Reports"
+      subtitle="Detailed analysis of every quiz and interview session"
+      currentPage="reports-inbox"
+      user={user}
+      onNavigate={onNavigate}
+      onLogout={onLogout}
+    >
+      <div className="max-w-4xl mx-auto space-y-6">
+        <div className="bg-slate-900/80 border border-slate-800/80 rounded-2xl p-6 shadow-xl backdrop-blur-sm">
+          <h1 className="text-2xl sm:text-3xl font-black text-white mb-2">Comprehensive Reports</h1>
+          <p className="text-sm text-slate-400 leading-relaxed">
+            Detailed breakdown of your diagnostic quizzes, technical challenges, and mock interviews — complete with per-mistake explanations and AI-generated synopses for weaker concepts.
+          </p>
+        </div>
 
-      {rows.length === 0 ? (
-        <div className="bg-slate-50 border border-slate-200 rounded-xl p-8 text-center text-slate-500">
-          <div className="text-4xl mb-2">📭</div>
-          <div className="font-bold">No reports yet</div>
-          <div className="text-xs mt-1">Take any quiz or interview — a comprehensive report is generated automatically.</div>
-        </div>
-      ) : (
-        <div className="space-y-2">
-          {rows.map((r) => {
-            const pct = Math.round(r.overallScore);
-            const scoreColor = pct >= 80 ? 'text-emerald-600' : pct >= 60 ? 'text-amber-600' : 'text-red-600';
-            const weakCount = (r.weakConcepts || []).length;
-            return (
-              <button
-                key={r.id}
-                onClick={() => onOpen(r.id)}
-                className="w-full text-left bg-white p-4 rounded-xl border border-gray-100 shadow-sm hover:shadow-md hover:border-indigo-200 transition flex items-center gap-4"
-              >
-                <div className="flex-1 min-w-0">
-                  <div className="text-xs font-black uppercase tracking-widest text-indigo-600 mb-0.5">
-                    {SOURCE_LABEL[r.sourceType] || r.sourceType}
-                  </div>
-                  <div className="text-sm text-gray-500">
-                    {new Date(r.createdAt).toLocaleString()}
-                    {weakCount > 0 && (
-                      <span className="ml-3 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-[10px] font-bold">
-                        ⚠ {weakCount} weak concept{weakCount > 1 ? 's' : ''}
+        {error ? (
+          <div className="bg-rose-500/10 border border-rose-500/30 text-rose-300 p-6 rounded-2xl text-center">
+            {error}
+          </div>
+        ) : rows === null ? (
+          <div className="text-center py-16 text-slate-500 animate-pulse font-medium">
+            Loading your reports…
+          </div>
+        ) : rows.length === 0 ? (
+          <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-12 text-center text-slate-400 shadow-xl">
+            <div className="text-5xl mb-3">📭</div>
+            <div className="font-bold text-lg text-white mb-1">No reports recorded yet</div>
+            <div className="text-xs text-slate-400 max-w-sm mx-auto mb-6">
+              Complete any quiz, coding session, or AI interview — your detailed report will appear here automatically.
+            </div>
+            <button
+              onClick={() => onNavigate('interview-hub')}
+              className="px-6 py-2.5 rounded-xl font-bold text-sm text-white bg-indigo-600 hover:bg-indigo-500 transition shadow-lg shadow-indigo-600/30"
+            >
+              Start Practice Session
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {rows.map((r) => {
+              const pct = Math.round(r.overallScore);
+              const scoreBadge =
+                pct >= 80
+                  ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+                  : pct >= 60
+                  ? 'bg-amber-500/10 border-amber-500/30 text-amber-400'
+                  : 'bg-rose-500/10 border-rose-500/30 text-rose-400';
+              const weakCount = (r.weakConcepts || []).length;
+
+              return (
+                <button
+                  key={r.id}
+                  onClick={() => onOpen(r.id)}
+                  className="w-full text-left bg-slate-900/90 hover:bg-slate-850 p-5 rounded-2xl border border-slate-800 hover:border-indigo-500/50 shadow-lg shadow-slate-950/40 transition-all flex items-center justify-between gap-4 group"
+                >
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <span className="text-xs font-black uppercase tracking-wider text-indigo-400">
+                        {SOURCE_LABEL[r.sourceType] || r.sourceType}
                       </span>
-                    )}
+                      {weakCount > 0 && (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-[10px] font-bold">
+                          ⚠ {weakCount} weak concept{weakCount > 1 ? 's' : ''}
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-xs text-slate-400">
+                      {new Date(r.createdAt).toLocaleString()}
+                    </div>
                   </div>
-                </div>
-                <div className={`text-2xl font-black ${scoreColor}`}>{pct}</div>
-                <span className="text-gray-400">→</span>
-              </button>
-            );
-          })}
-        </div>
-      )}
-    </div>
+
+                  <div className="flex items-center gap-4">
+                    <div
+                      className={`px-3 py-1 rounded-xl text-lg sm:text-xl font-black border ${scoreBadge}`}
+                    >
+                      {pct}%
+                    </div>
+                    <span className="text-slate-500 group-hover:text-indigo-400 group-hover:translate-x-0.5 transition-transform text-lg">
+                      →
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </FullScreenShell>
   );
 };

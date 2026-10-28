@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { apiClient } from '../services/api';
+import { FullScreenShell } from '../components/FullScreenShell';
 
 // Personalized learning pipeline dashboard. The current stage sits front-and-
 // center with a big CTA; upcoming stages are dimmed and locked; completed
@@ -86,10 +87,26 @@ const gateReqText = (stage: Stage): string => {
   return '';
 };
 
-export const PipelinePage: React.FC<{
+export interface PipelinePageProps {
+  user?: {
+    id?: string;
+    name?: string;
+    role?: string;
+    level?: number;
+    xpTotal?: number;
+    streakDays?: number;
+  } | null;
   onNavigate: (page: string, ctx?: Record<string, string>) => void;
   onNoDiagnostic: () => void;
-}> = ({ onNavigate, onNoDiagnostic }) => {
+  onLogout?: () => void;
+}
+
+export const PipelinePage: React.FC<PipelinePageProps> = ({
+  user,
+  onNavigate,
+  onNoDiagnostic,
+  onLogout,
+}) => {
   const [pipeline, setPipeline] = useState<Pipeline | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -128,9 +145,12 @@ export const PipelinePage: React.FC<{
 
   const skipStage = async (stageId: string) => {
     if (!pipeline) return;
-    if (!confirm(
-      "This stage will be marked as MISSED — not completed. It stays on your pipeline and you can come back to complete it any time. Skip for now?"
-    )) return;
+    if (
+      !confirm(
+        'This stage will be marked as MISSED — not completed. It stays on your pipeline and you can come back to complete it any time. Skip for now?'
+      )
+    )
+      return;
     try {
       await apiClient.post(`/pipeline/${pipeline.id}/skip-stage/${stageId}`, {});
       load();
@@ -140,45 +160,73 @@ export const PipelinePage: React.FC<{
   };
 
   if (loading) {
-    return <div className="text-center py-16 text-gray-500 animate-pulse">Loading your pipeline…</div>;
+    return (
+      <FullScreenShell
+        title="My Learning Pipeline"
+        subtitle="Adaptive milestone progression"
+        icon="🎯"
+        currentPage="pipeline"
+        user={user}
+        onNavigate={onNavigate}
+        onLogout={onLogout}
+      >
+        <div className="flex flex-col items-center justify-center py-20 gap-3">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-emerald-500"></div>
+          <p className="text-xs text-slate-400 font-bold">Loading your personalized roadmap…</p>
+        </div>
+      </FullScreenShell>
+    );
   }
 
   // No pipeline yet — offer to generate one or point to the diagnostic
   if (!pipeline) {
     return (
-      <div className="max-w-2xl mx-auto py-10">
-        <div className="bg-white p-8 rounded-2xl shadow text-center">
-          <div className="text-5xl mb-3">🎯</div>
-          <h1 className="text-2xl font-black mb-2">No active pipeline</h1>
-          <p className="text-gray-600 mb-5">
-            Generate a personalized roadmap based on your skill profile. Pick a preset:
-          </p>
-          {error && <div className="bg-red-50 border border-red-200 text-red-700 p-3 rounded mb-3 text-sm">{error}</div>}
-          <div className="grid sm:grid-cols-3 gap-3">
-            {[
-              { focus: 'balanced', title: 'Balanced', desc: 'Touches all pillars — ~4 weeks' },
-              { focus: 'placement-6w', title: 'Placement 6-week', desc: 'Frontloads CS + coding' },
-              { focus: 'coding-only', title: 'Coding-only', desc: 'DSA ladder, all coding' },
-            ].map((preset) => (
-              <button
-                key={preset.focus}
-                onClick={() => createFresh(preset.focus)}
-                disabled={busy}
-                className="p-4 rounded-xl border-2 border-gray-200 hover:border-indigo-500 hover:bg-indigo-50 text-left transition disabled:opacity-40"
-              >
-                <div className="font-black text-gray-900 text-sm">{preset.title}</div>
-                <div className="text-xs text-gray-500 mt-1">{preset.desc}</div>
-              </button>
-            ))}
+      <FullScreenShell
+        title="My Learning Pipeline"
+        subtitle="Adaptive milestone progression"
+        icon="🎯"
+        currentPage="pipeline"
+        user={user}
+        onNavigate={onNavigate}
+        onLogout={onLogout}
+      >
+        <div className="max-w-2xl mx-auto py-10">
+          <div className="bg-slate-900/90 border border-slate-800 p-8 rounded-3xl shadow-2xl text-center">
+            <div className="text-5xl mb-3">🎯</div>
+            <h1 className="text-2xl font-black text-white mb-2">No Active Pipeline Found</h1>
+            <p className="text-slate-400 text-sm mb-6 leading-relaxed">
+              Generate a personalized placement roadmap based on your skill profile, or select a preset focus below:
+            </p>
+            {error && (
+              <div className="bg-rose-500/20 border border-rose-500/30 text-rose-300 p-3 rounded-xl mb-4 text-xs font-bold">
+                {error}
+              </div>
+            )}
+            <div className="grid sm:grid-cols-3 gap-3">
+              {[
+                { focus: 'balanced', title: 'Balanced Path', desc: 'Touches all pillars — ~4 weeks' },
+                { focus: 'placement-6w', title: 'Placement 6-Week', desc: 'Frontloads CS + Coding' },
+                { focus: 'coding-only', title: 'Coding Only', desc: 'Intensive DSA ladder' },
+              ].map((preset) => (
+                <button
+                  key={preset.focus}
+                  onClick={() => createFresh(preset.focus)}
+                  disabled={busy}
+                  className="p-4 rounded-2xl bg-slate-800/80 hover:bg-slate-800 border border-slate-700/80 hover:border-indigo-500/60 text-left transition disabled:opacity-40 cursor-pointer group"
+                >
+                  <div className="font-black text-white group-hover:text-indigo-300 text-sm">
+                    {preset.title}
+                  </div>
+                  <div className="text-xs text-slate-400 mt-1">{preset.desc}</div>
+                </button>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
+      </FullScreenShell>
     );
   }
 
-  // Three real states: completed (isCompleted), missed (isSkipped && !isCompleted),
-  // pending (neither). "Current" is the first unlocked non-completed non-skipped
-  // stage — the one the user is actively expected to work on next.
   const completed = pipeline.stages.filter((s) => s.isCompleted);
   const missed = pipeline.stages.filter((s) => s.isSkipped && !s.isCompleted);
   const pending = pipeline.stages.filter((s) => !s.isCompleted && !s.isSkipped);
@@ -187,187 +235,211 @@ export const PipelinePage: React.FC<{
   const pct = Math.round((completed.length / pipeline.stages.length) * 100);
 
   return (
-    <div className="max-w-4xl mx-auto py-6">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-indigo-600 via-violet-600 to-fuchsia-600 text-white rounded-2xl p-6 mb-6 shadow-lg">
-        <div className="flex items-center justify-between mb-3">
+    <FullScreenShell
+      title="My Learning Pipeline"
+      subtitle="Adaptive diagnostic milestones & skill ladder"
+      icon="🎯"
+      currentPage="pipeline"
+      user={user}
+      onNavigate={onNavigate}
+      onLogout={onLogout}
+    >
+      <div className="max-w-4xl mx-auto flex flex-col gap-6">
+        {/* PIPELINE PROGRESS HEADER */}
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-emerald-950/70 via-teal-900/50 to-slate-900/90 border border-emerald-500/30 text-white p-6 sm:p-8 shadow-2xl backdrop-blur-md">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+            <div>
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-xs font-black uppercase tracking-wider mb-2">
+                <span>🎯</span> Pipeline Focus: {pipeline.focus}
+              </div>
+              <h1 className="text-2xl sm:text-3xl font-black tracking-tight">
+                {completed.length} / {pipeline.stages.length} Stages Complete ({pct}%)
+              </h1>
+              {missed.length > 0 && (
+                <div className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/20 border border-amber-500/30 text-amber-300 text-xs font-bold">
+                  ⚠ {missed.length} missed — review and complete
+                </div>
+              )}
+            </div>
+            <button
+              onClick={() => createFresh(pipeline.focus)}
+              disabled={busy}
+              className="px-4 py-2 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700 transition cursor-pointer self-start sm:self-auto"
+            >
+              ↻ Regenerate
+            </button>
+          </div>
+
+          <div className="w-full bg-slate-800 rounded-full h-3 overflow-hidden">
+            <div
+              className="bg-gradient-to-r from-emerald-400 to-teal-400 h-3 rounded-full transition-all"
+              style={{ width: `${pct}%` }}
+            />
+          </div>
+        </div>
+
+        {error && (
+          <div className="bg-rose-500/20 border border-rose-500/30 text-rose-300 p-3 rounded-xl text-xs font-bold">
+            {error}
+          </div>
+        )}
+
+        {/* COMPLETED STRIP */}
+        {completed.length > 0 && (
           <div>
-            <div className="text-xs font-black uppercase tracking-widest text-indigo-200">
-              Your learning pipeline · {pipeline.focus}
+            <div className="text-xs font-black uppercase tracking-widest text-slate-400 mb-2.5 flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+              Completed Stages ({completed.length})
             </div>
-            <h1 className="text-3xl font-black">
-              {completed.length} / {pipeline.stages.length} stages — {pct}% complete
-            </h1>
-            {missed.length > 0 && (
-              <div className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-400/25 border border-amber-200/50 text-amber-100 text-xs font-bold">
-                ⚠ {missed.length} missed — go back and complete
-              </div>
-            )}
-          </div>
-          <button
-            onClick={() => createFresh(pipeline.focus)}
-            disabled={busy}
-            className="text-xs font-bold px-3 py-1.5 rounded-lg bg-white/15 border border-white/40 hover:bg-white/25 transition"
-          >
-            ↻ Regenerate
-          </button>
-        </div>
-        <div className="w-full bg-white/20 rounded-full h-2">
-          <div
-            className="bg-white h-2 rounded-full transition-all"
-            style={{ width: `${pct}%` }}
-          />
-        </div>
-      </div>
-
-      {error && <div className="bg-red-50 border border-red-200 text-red-700 p-3 rounded mb-4 text-sm">{error}</div>}
-
-      {/* Completed strip */}
-      {completed.length > 0 && (
-        <div className="mb-6">
-          <div className="text-xs font-black uppercase tracking-widest text-gray-400 mb-2">
-            Completed ({completed.length})
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {completed.map((s) => (
-              <div
-                key={s.id}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold"
-                title={s.title}
-              >
-                <span>{PILLAR_ICON[s.pillar]}</span>
-                <span className="truncate max-w-[220px]">{s.title}</span>
-                <span className="opacity-60">✓</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Current stage — the big card */}
-      {current ? (
-        <div className="bg-white p-6 rounded-2xl shadow-xl border-2 border-indigo-500 mb-6">
-          <div className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-indigo-600 mb-2">
-            <span className="animate-pulse">●</span> Current stage · Stage {current.order}
-          </div>
-          <div className="flex items-start gap-4 mb-4">
-            <div className="text-4xl">{PILLAR_ICON[current.pillar]}</div>
-            <div className="flex-1">
-              <h2 className="text-2xl font-black text-gray-900">{current.title}</h2>
-              <div className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">
-                {PILLAR_LABEL[current.pillar]} · Target level {current.level}
-              </div>
-            </div>
-          </div>
-          <p className="text-sm text-gray-600 mb-3">{current.description}</p>
-          {current.gateMeta?.synopsisBullet && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-blue-900 mb-3">
-              💡 <b>Key takeaway:</b> {current.gateMeta.synopsisBullet}
-            </div>
-          )}
-          <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 text-xs font-bold text-slate-700 mb-4">
-            🎯 Gate: {gateReqText(current)}
-          </div>
-          <div className="flex gap-3">
-            <button
-              onClick={() => {
-                const cta = ctaFor(current);
-                onNavigate(cta.targetPage, cta.extra);
-              }}
-              className="flex-1 py-3.5 rounded-xl font-black text-white bg-gradient-to-r from-indigo-600 to-violet-600 hover:opacity-95 transition shadow"
-            >
-              {ctaFor(current).label}
-            </button>
-            <button
-              onClick={() => skipStage(current.id)}
-              className="px-4 rounded-xl font-bold text-gray-600 bg-slate-100 hover:bg-slate-200 transition text-sm"
-            >
-              Skip
-            </button>
-          </div>
-        </div>
-      ) : (
-        <div className="bg-emerald-50 border-2 border-emerald-300 rounded-2xl p-8 text-center mb-6">
-          <div className="text-5xl mb-2">🎉</div>
-          <div className="text-2xl font-black text-emerald-800">Pipeline complete!</div>
-          <div className="text-sm text-emerald-700 mt-1">
-            You've walked every stage. Retake the diagnostic for a fresh, harder ladder.
-          </div>
-        </div>
-      )}
-
-      {/* Missed stages — user skipped these but they still count against progress */}
-      {missed.length > 0 && (
-        <div className="mb-6">
-          <div className="text-xs font-black uppercase tracking-widest text-amber-700 mb-3 flex items-center gap-2">
-            <span>⚠ Missed ({missed.length})</span>
-            <span className="text-[10px] font-semibold text-gray-500 normal-case tracking-normal">
-              These don't count as complete — go back and finish them
-            </span>
-          </div>
-          <div className="space-y-2">
-            {missed.map((s) => {
-              const cta = ctaFor(s);
-              return (
+            <div className="flex flex-wrap gap-2">
+              {completed.map((s) => (
                 <div
                   key={s.id}
-                  className="bg-amber-50 p-4 rounded-xl border-2 border-amber-300 flex items-center gap-3"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-bold"
+                  title={s.title}
                 >
-                  <div className="text-2xl">{PILLAR_ICON[s.pillar]}</div>
-                  <div className="flex-1 min-w-0">
-                    <div className="font-black text-amber-900 text-sm truncate">
-                      Stage {s.order} · {s.title}
-                    </div>
-                    <div className="text-xs text-amber-700">{gateReqText(s)}</div>
-                    {s.gateMeta?.synopsisBullet && (
-                      <div className="text-[11px] text-amber-800 mt-1 truncate italic">
-                        💡 {s.gateMeta.synopsisBullet}
-                      </div>
-                    )}
-                  </div>
-                  <button
-                    onClick={() => onNavigate(cta.targetPage, cta.extra)}
-                    className="px-4 py-2 rounded-lg font-black text-white bg-amber-600 hover:bg-amber-700 transition text-xs whitespace-nowrap"
-                  >
-                    Complete now →
-                  </button>
+                  <span>{PILLAR_ICON[s.pillar]}</span>
+                  <span className="truncate max-w-[200px]">{s.title}</span>
+                  <span className="opacity-80">✓</span>
                 </div>
-              );
-            })}
+              ))}
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Upcoming stages */}
-      {locked.length > 0 && (
-        <div>
-          <div className="text-xs font-black uppercase tracking-widest text-gray-400 mb-3">
-            Upcoming ({locked.length})
-          </div>
-          <div className="space-y-2">
-            {locked.slice(0, 6).map((s) => (
-              <div
-                key={s.id}
-                className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 opacity-70 flex items-center gap-3"
-              >
-                <div className="text-2xl grayscale">{PILLAR_ICON[s.pillar]}</div>
-                <div className="flex-1 min-w-0">
-                  <div className="font-black text-gray-700 text-sm truncate">
-                    Stage {s.order} · {s.title}
-                  </div>
-                  <div className="text-xs text-gray-400 truncate">{gateReqText(s)}</div>
-                </div>
-                <div className="text-xs font-bold text-gray-400">🔒 Locked</div>
+        {/* CURRENT ACTIVE STAGE CARD */}
+        {current ? (
+          <div className="bg-slate-900/95 border-2 border-indigo-500/80 rounded-3xl p-6 sm:p-8 shadow-2xl shadow-indigo-950/60 relative overflow-hidden">
+            <div className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-indigo-400 mb-3">
+              <span className="w-2 h-2 rounded-full bg-indigo-400 animate-pulse"></span>
+              Active Target · Stage {current.order}
+            </div>
+
+            <div className="flex items-start gap-4 mb-4">
+              <div className="text-4xl p-3 bg-slate-800 border border-slate-700/60 rounded-2xl shrink-0">
+                {PILLAR_ICON[current.pillar]}
               </div>
-            ))}
-            {locked.length > 6 && (
-              <div className="text-center text-xs text-gray-400 pt-2">
-                + {locked.length - 6} more stages ahead
+              <div className="flex-1 min-w-0">
+                <h2 className="text-xl sm:text-2xl font-black text-white">{current.title}</h2>
+                <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">
+                  {PILLAR_LABEL[current.pillar]} · Target Level {current.level}
+                </div>
+              </div>
+            </div>
+
+            <p className="text-sm text-slate-300 mb-4 leading-relaxed">{current.description}</p>
+
+            {current.gateMeta?.synopsisBullet && (
+              <div className="bg-indigo-500/15 border border-indigo-500/30 rounded-xl p-3 text-xs text-indigo-300 mb-4">
+                💡 <b>Key Concept:</b> {current.gateMeta.synopsisBullet}
               </div>
             )}
+
+            <div className="bg-slate-800/80 border border-slate-700/60 rounded-xl p-3.5 text-xs font-bold text-slate-300 mb-6 flex items-center gap-2">
+              <span>🎯</span>
+              <span>Gate Requirement: {gateReqText(current)}</span>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  const cta = ctaFor(current);
+                  onNavigate(cta.targetPage, cta.extra);
+                }}
+                className="flex-1 py-3.5 rounded-xl font-black text-white bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 transition shadow-lg shadow-indigo-900/50 active:scale-95 cursor-pointer text-sm"
+              >
+                {ctaFor(current).label}
+              </button>
+              <button
+                onClick={() => skipStage(current.id)}
+                className="px-5 rounded-xl font-bold text-slate-300 bg-slate-800 hover:bg-slate-700 border border-slate-700 transition text-xs active:scale-95 cursor-pointer"
+              >
+                Skip For Now
+              </button>
+            </div>
           </div>
-        </div>
-      )}
-    </div>
+        ) : (
+          <div className="bg-emerald-500/10 border-2 border-emerald-500/40 rounded-3xl p-8 text-center">
+            <div className="text-5xl mb-2">🎉</div>
+            <div className="text-2xl font-black text-emerald-400">Pipeline Complete!</div>
+            <div className="text-sm text-slate-300 mt-1">
+              You have walked every milestone stage. Retake the diagnostic for a fresh, advanced ladder.
+            </div>
+          </div>
+        )}
+
+        {/* MISSED STAGES */}
+        {missed.length > 0 && (
+          <div>
+            <div className="text-xs font-black uppercase tracking-widest text-amber-400 mb-3 flex items-center gap-2">
+              <span>⚠ Missed ({missed.length})</span>
+              <span className="text-[10px] font-semibold text-slate-400 normal-case tracking-normal">
+                These don't count as complete — revisit to finish them
+              </span>
+            </div>
+            <div className="space-y-2">
+              {missed.map((s) => {
+                const cta = ctaFor(s);
+                return (
+                  <div
+                    key={s.id}
+                    className="bg-amber-500/10 p-4 rounded-2xl border border-amber-500/30 flex items-center gap-3"
+                  >
+                    <div className="text-2xl">{PILLAR_ICON[s.pillar]}</div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-black text-white text-sm truncate">
+                        Stage {s.order} · {s.title}
+                      </div>
+                      <div className="text-xs text-amber-300 mt-0.5">{gateReqText(s)}</div>
+                    </div>
+                    <button
+                      onClick={() => onNavigate(cta.targetPage, cta.extra)}
+                      className="px-4 py-2 rounded-xl font-black text-slate-950 bg-amber-400 hover:bg-amber-300 transition text-xs whitespace-nowrap cursor-pointer active:scale-95"
+                    >
+                      Complete Now →
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* UPCOMING LOCKED STAGES */}
+        {locked.length > 0 && (
+          <div>
+            <div className="text-xs font-black uppercase tracking-widest text-slate-400 mb-3 flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-slate-500"></span>
+              Upcoming Milestones ({locked.length})
+            </div>
+            <div className="space-y-2">
+              {locked.slice(0, 6).map((s) => (
+                <div
+                  key={s.id}
+                  className="bg-slate-900/60 p-4 rounded-2xl border border-slate-800/80 opacity-60 flex items-center gap-3"
+                >
+                  <div className="text-2xl grayscale">{PILLAR_ICON[s.pillar]}</div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-bold text-slate-300 text-sm truncate">
+                      Stage {s.order} · {s.title}
+                    </div>
+                    <div className="text-xs text-slate-500 truncate mt-0.5">{gateReqText(s)}</div>
+                  </div>
+                  <div className="text-xs font-bold text-slate-500 flex items-center gap-1">
+                    <span>🔒</span> Locked
+                  </div>
+                </div>
+              ))}
+              {locked.length > 6 && (
+                <div className="text-center text-xs text-slate-500 pt-2 font-medium">
+                  + {locked.length - 6} more stages ahead in your pipeline
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    </FullScreenShell>
   );
 };
+export default PipelinePage;

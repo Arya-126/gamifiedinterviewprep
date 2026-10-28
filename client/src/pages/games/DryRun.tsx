@@ -1,9 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { apiClient } from '../../services/api';
-
-// Dry-Run — predict the output of a small snippet.
-// Puzzle payload comes from server-cached GameContent (codingGamesService.ts).
-// Answer compared with normalized whitespace/case-insensitive fallback.
+import { FullScreenShell } from '../../components/FullScreenShell';
 
 interface Payload {
   id: string;
@@ -27,7 +24,19 @@ function normalize(s: string): string {
     .toLowerCase();
 }
 
-export const DryRunGame: React.FC<{ onBack: () => void }> = ({ onBack }) => {
+interface DryRunGameProps {
+  onBack: () => void;
+  user?: any;
+  onNavigate?: (page: string) => void;
+  onLogout?: () => void;
+}
+
+export const DryRunGame: React.FC<DryRunGameProps> = ({
+  onBack,
+  user,
+  onNavigate = () => {},
+  onLogout,
+}) => {
   const [round, setRound] = useState(0);
   const [data, setData] = useState<Payload | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -36,113 +45,149 @@ export const DryRunGame: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [hintShown, setHintShown] = useState(false);
 
   useEffect(() => {
-    setData(null); setGuess(''); setChecked(false); setHintShown(false); setError(null);
+    setData(null);
+    setGuess('');
+    setChecked(false);
+    setHintShown(false);
+    setError(null);
     apiClient
       .get<Payload>('/games-content/dry-run/random')
       .then(setData)
       .catch((e) => setError(e?.message || 'Could not load a puzzle. Try running the batch generator.'));
   }, [round]);
 
-  if (error) return (
-    <div className="max-w-lg mx-auto py-10 text-center">
-      <div className="text-red-700 bg-red-50 border border-red-200 rounded-xl p-4 mb-4 text-sm">{error}</div>
-      <button onClick={onBack} className="text-sm font-bold text-indigo-600">← Back</button>
-    </div>
-  );
-  if (!data) return <div className="max-w-lg mx-auto py-16 text-center text-gray-400 animate-pulse">Loading a Dry-Run puzzle…</div>;
-
-  const p = data.payload;
-  const isCorrect = checked && normalize(guess) === normalize(p.expectedOutput);
-
   return (
-    <div className="max-w-3xl mx-auto py-6">
-      <button onClick={onBack} className="text-sm font-bold text-indigo-600 mb-4">← Back</button>
-
-      <div className="bg-white p-5 rounded-2xl shadow mb-4">
-        <div className="text-[10px] font-black uppercase tracking-widest text-indigo-600 mb-1">
-          🔍 Dry-Run · {p.language}
+    <FullScreenShell
+      title="Dry Run"
+      subtitle="Predict code snippet output and trace algorithm execution"
+      currentPage="game-dry-run"
+      user={user}
+      onNavigate={onNavigate}
+      onLogout={onLogout}
+    >
+      <div className="max-w-3xl mx-auto space-y-4">
+        <div className="flex justify-between items-center bg-slate-900/80 border border-slate-800 rounded-2xl p-4 shadow-xl">
+          <button
+            onClick={onBack}
+            className="text-xs font-bold text-slate-300 hover:text-white px-3 py-1.5 rounded-xl bg-slate-800 border border-slate-700 transition"
+          >
+            ← Back
+          </button>
+          <div className="text-xs font-black uppercase tracking-widest text-indigo-400">
+            Puzzle {round + 1}
+          </div>
         </div>
-        <h1 className="text-xl font-black text-gray-900">{p.problemTitle}</h1>
-        <p className="text-xs text-gray-500 mt-1 mb-3">Trace the code by hand and predict its output.</p>
 
-        <div className="bg-slate-950 text-slate-100 rounded-xl overflow-hidden font-mono text-sm p-3 mb-3 overflow-x-auto">
-          <pre className="whitespace-pre">{p.snippet}</pre>
-        </div>
-
-        {p.input && (
-          <div className="mb-3">
-            <div className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1">Input (stdin)</div>
-            <pre className="bg-slate-50 border border-slate-200 rounded p-2 text-xs font-mono whitespace-pre">{p.input}</pre>
+        {error ? (
+          <div className="bg-rose-500/10 border border-rose-500/30 text-rose-300 p-6 rounded-2xl text-center text-xs">
+            {error}
           </div>
-        )}
-
-        <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1 block">
-          Your predicted output
-        </label>
-        <textarea
-          value={guess}
-          onChange={(e) => setGuess(e.target.value)}
-          disabled={checked}
-          placeholder="Type the exact stdout you think this snippet will print…"
-          rows={3}
-          className="w-full border rounded-xl px-3 py-2 text-sm font-mono resize-none disabled:bg-slate-50"
-        />
-
-        {!checked && (
-          <div className="flex gap-2 mt-3">
-            <button
-              onClick={() => setHintShown(true)}
-              disabled={hintShown}
-              className="px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold disabled:opacity-50"
-            >
-              💡 Hint
-            </button>
-            <button
-              onClick={() => setChecked(true)}
-              disabled={!guess.trim()}
-              className="flex-1 py-2.5 rounded-lg font-black text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40"
-            >
-              Check
-            </button>
+        ) : !data ? (
+          <div className="text-center py-20 text-slate-500 font-medium animate-pulse">
+            Loading a Dry-Run puzzle…
           </div>
-        )}
+        ) : (
+          (() => {
+            const p = data.payload;
+            const isCorrect = checked && normalize(guess) === normalize(p.expectedOutput);
 
-        {hintShown && !checked && (
-          <div className="mt-3 bg-blue-50 border border-blue-200 rounded-lg p-2.5 text-xs text-blue-900">
-            💡 {p.hint}
-          </div>
-        )}
-
-        {checked && (
-          <>
-            <div className={`mt-4 p-4 rounded-xl ${isCorrect ? 'bg-emerald-100' : 'bg-amber-50'}`}>
-              <div className="text-3xl text-center">{isCorrect ? '🎉' : '💡'}</div>
-              <div className="font-black text-center text-gray-900 mt-1">
-                {isCorrect ? 'Nailed it!' : 'Not quite — see the expected output below.'}
-              </div>
-              <div className="mt-3 grid gap-2 text-xs">
-                <div>
-                  <div className="font-black uppercase text-gray-500">Your answer</div>
-                  <pre className={`p-2 rounded font-mono whitespace-pre border ${isCorrect ? 'bg-white border-emerald-200' : 'bg-white border-red-200'}`}>{guess}</pre>
+            return (
+              <div className="bg-slate-900/90 p-6 sm:p-8 rounded-3xl shadow-xl border border-slate-800">
+                <div className="text-[10px] font-black uppercase tracking-widest text-indigo-400 mb-1.5">
+                  🧪 Dry-Run · {p.language}
                 </div>
-                {!isCorrect && (
-                  <div>
-                    <div className="font-black uppercase text-gray-500">Expected</div>
-                    <pre className="p-2 rounded font-mono whitespace-pre bg-white border border-emerald-200 text-emerald-700">{p.expectedOutput}</pre>
+                <h1 className="text-xl sm:text-2xl font-black text-white mb-2">{p.problemTitle}</h1>
+                <p className="text-xs text-slate-400 mb-5 leading-relaxed">
+                  Predict what this snippet prints. Trace variables step by step before answering.
+                </p>
+
+                {/* Code snippet */}
+                <pre className="bg-slate-950 border border-slate-800 text-slate-200 rounded-2xl p-4 text-xs font-mono overflow-x-auto whitespace-pre mb-5 shadow-inner">
+                  {p.snippet.trim()}
+                </pre>
+
+                {p.input && (
+                  <div className="mb-5 bg-slate-950/60 border border-slate-800 rounded-xl p-3">
+                    <div className="text-[10px] font-black uppercase text-slate-500 mb-1">Input</div>
+                    <code className="text-xs font-mono text-indigo-300">{p.input}</code>
+                  </div>
+                )}
+
+                {/* Guess input */}
+                <div className="mb-5">
+                  <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-2">
+                    Your predicted output
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={guess}
+                    onChange={(e) => setGuess(e.target.value)}
+                    disabled={checked}
+                    placeholder="Type the exact printed output here..."
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 font-mono text-xs text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500 transition disabled:opacity-60"
+                  />
+                </div>
+
+                {/* Buttons */}
+                <div className="flex flex-wrap gap-2.5 mb-4">
+                  {!checked ? (
+                    <button
+                      onClick={() => setChecked(true)}
+                      disabled={!guess.trim()}
+                      className="px-5 py-2.5 rounded-xl font-bold text-xs text-white bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 shadow-md shadow-indigo-500/20 disabled:opacity-40 transition"
+                    >
+                      Check Output
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => setRound(round + 1)}
+                      className="px-5 py-2.5 rounded-xl font-bold text-xs text-white bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 shadow-md transition"
+                    >
+                      🔄 Next Puzzle
+                    </button>
+                  )}
+
+                  {!checked && (
+                    <button
+                      onClick={() => setHintShown(true)}
+                      disabled={hintShown}
+                      className="px-4 py-2.5 rounded-xl font-bold text-xs text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 transition disabled:opacity-40"
+                    >
+                      💡 Hint
+                    </button>
+                  )}
+                </div>
+
+                {hintShown && (
+                  <div className="bg-amber-500/10 border border-amber-500/30 text-amber-300 p-3.5 rounded-xl text-xs mb-4">
+                    <b>Hint:</b> {p.hint}
+                  </div>
+                )}
+
+                {checked && (
+                  <div
+                    className={`p-4 rounded-xl text-xs border ${
+                      isCorrect
+                        ? 'bg-emerald-950/30 border-emerald-500/40 text-emerald-300'
+                        : 'bg-rose-950/30 border-rose-500/40 text-rose-300'
+                    }`}
+                  >
+                    <b>{isCorrect ? '🎉 Correct output!' : '❌ Incorrect.'}</b>
+                    {!isCorrect && (
+                      <div className="mt-2 text-slate-300">
+                        <span className="font-bold text-slate-400">Expected:</span>
+                        <pre className="mt-1 bg-slate-950 p-2.5 rounded border border-slate-800 text-emerald-400 font-mono text-xs whitespace-pre">
+                          {p.expectedOutput.trim()}
+                        </pre>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
-            </div>
-
-            <button
-              onClick={() => setRound(round + 1)}
-              className="w-full mt-4 py-3 rounded-xl font-black text-white bg-indigo-600 hover:bg-indigo-700"
-            >
-              🔄 Next puzzle
-            </button>
-          </>
+            );
+          })()
         )}
       </div>
-    </div>
+    </FullScreenShell>
   );
 };

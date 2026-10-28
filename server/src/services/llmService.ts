@@ -5,8 +5,8 @@ import Groq from 'groq-sdk';
 // ANTHROPIC_API_KEY is set; otherwise Groq (llama-3.3-70b).
 
 const ANTHROPIC_MODEL = 'claude-opus-4-8';
-const GROQ_MODEL = process.env.GROQ_MODEL || 'groq/compound';
-const GROQ_FALLBACK_MODEL = process.env.GROQ_FALLBACK_MODEL || 'groq/compound-mini';
+const GROQ_MODEL = process.env.GROQ_MODEL || 'qwen/qwen3.8-27b';
+const GROQ_FALLBACK_MODEL = process.env.GROQ_FALLBACK_MODEL || 'openai/gpt-oss-20b';
 
 const useAnthropic = !!process.env.ANTHROPIC_API_KEY;
 const anthropic = useAnthropic ? new Anthropic() : null;
@@ -64,7 +64,7 @@ export async function chat(
     return response.choices[0]?.message?.content || '';
   };
 
-  const candidates = [GROQ_MODEL, GROQ_FALLBACK_MODEL, 'openai/gpt-oss-20b', 'llama-3.1-8b-instant'];
+  const candidates = [GROQ_MODEL, GROQ_FALLBACK_MODEL, 'openai/gpt-oss-120b', 'meta-models/muse-spark-open'];
   const tried = new Set<string>();
 
   for (const model of candidates) {
