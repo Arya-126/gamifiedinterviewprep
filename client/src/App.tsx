@@ -37,6 +37,7 @@ import { CodingTracks } from './pages/CodingTracks';
 import { ProblemSolver } from './pages/ProblemSolver';
 import { HrPrep } from './pages/HrPrep';
 import { LeftNav } from './components/LeftNav';
+import { FullScreenShell } from './components/FullScreenShell';
 import { TestBuilder } from './pages/TestBuilder';
 import { AdminReports } from './pages/AdminReports';
 import { InterviewChat } from './pages/InterviewChat';
@@ -306,6 +307,11 @@ const App: React.FC = () => {
     'game-dry-run',
     'game-sql-puzzle',
     'game-diagram-labeler',
+    'game',
+    'arcade',
+    'interview-flashcards',
+    'interview-match',
+    'interview-sprint',
   ]);
   const isFullscreen = FULLSCREEN_PAGES.has(currentPage);
 
@@ -955,27 +961,63 @@ const App: React.FC = () => {
         )}
 
         {currentPage === 'interview-flashcards' && auth.user && selectedInterviewTopicId && (
-          <FormulaFlashCards
-            topicId={selectedInterviewTopicId}
-            topicName={selectedTopicName}
-            onComplete={() => setCurrentPage('interview-game-select')}
-          />
+          <FullScreenShell
+            title={`Flashcards: ${selectedTopicName}`}
+            subtitle="Spaced repetition formula recall and concepts"
+            icon="🃏"
+            currentPage="interview-flashcards"
+            user={auth.user}
+            onNavigate={handleNavigate}
+            onLogout={handleLogout}
+            showBackButton={true}
+            onBack={() => setCurrentPage('interview-game-select')}
+          >
+            <FormulaFlashCards
+              topicId={selectedInterviewTopicId}
+              topicName={selectedTopicName}
+              onComplete={() => setCurrentPage('interview-game-select')}
+            />
+          </FullScreenShell>
         )}
 
         {currentPage === 'interview-match' && auth.user && selectedInterviewTopicId && (
-          <FormulaMatch
-            topicId={selectedInterviewTopicId}
-            topicName={selectedTopicName}
-            onComplete={() => setCurrentPage('interview-game-select')}
-          />
+          <FullScreenShell
+            title={`Formula Match: ${selectedTopicName}`}
+            subtitle="Connect formulas with their matching mathematical expressions"
+            icon="🔗"
+            currentPage="interview-match"
+            user={auth.user}
+            onNavigate={handleNavigate}
+            onLogout={handleLogout}
+            showBackButton={true}
+            onBack={() => setCurrentPage('interview-game-select')}
+          >
+            <FormulaMatch
+              topicId={selectedInterviewTopicId}
+              topicName={selectedTopicName}
+              onComplete={() => setCurrentPage('interview-game-select')}
+            />
+          </FullScreenShell>
         )}
 
         {currentPage === 'interview-sprint' && auth.user && selectedInterviewTopicId && (
-          <ConceptSprint
-            topicId={selectedInterviewTopicId}
-            topicName={selectedTopicName}
-            onComplete={() => setCurrentPage('interview-game-select')}
-          />
+          <FullScreenShell
+            title={`Concept Sprint: ${selectedTopicName}`}
+            subtitle="Rapid-fire placement concept verification"
+            icon="⚡"
+            currentPage="interview-sprint"
+            user={auth.user}
+            onNavigate={handleNavigate}
+            onLogout={handleLogout}
+            showBackButton={true}
+            onBack={() => setCurrentPage('interview-game-select')}
+          >
+            <ConceptSprint
+              topicId={selectedInterviewTopicId}
+              topicName={selectedTopicName}
+              onComplete={() => setCurrentPage('interview-game-select')}
+            />
+          </FullScreenShell>
         )}
 
         {/* LEGACY SEARCH TOPICS */}
@@ -997,20 +1039,16 @@ const App: React.FC = () => {
         )}
 
         {currentPage === 'game' && auth.user && selectedTopicId && selectedGameType && (
-          <div>
-            <div className="mb-6 max-w-4xl mx-auto">
-              <button
-                onClick={() => setCurrentPage(gameOrigin === 'interview' ? 'interview-game-select' : 'arcade')}
-                className="text-red-500 hover:text-red-700 font-bold transition-colors flex items-center"
-              >
-                <span className="mr-2">🚪</span> Quit Game & Return
-              </button>
-            </div>
+          <>
             {selectedGameType === 'MCQ' && (
               <GameSession
                 topicId={selectedTopicId}
                 topicName={selectedTopicName}
                 onGameComplete={handleGameComplete}
+                user={auth.user}
+                onNavigate={handleNavigate}
+                onLogout={handleLogout}
+                onBack={() => setCurrentPage(gameOrigin === 'interview' ? 'interview-game-select' : 'arcade')}
               />
             )}
             {selectedGameType === 'MEMORY_MATCH' && (
@@ -1018,44 +1056,86 @@ const App: React.FC = () => {
                 topicId={selectedTopicId}
                 topicName={selectedTopicName}
                 onGameComplete={handleGameComplete}
+                user={auth.user}
+                onNavigate={handleNavigate}
+                onLogout={handleLogout}
+                onBack={() => setCurrentPage(gameOrigin === 'interview' ? 'interview-game-select' : 'arcade')}
               />
             )}
-            {selectedGameType === 'WORD_SCRAMBLE' && (
-              <WordScramble
-                topicId={selectedTopicId}
-                topicName={selectedTopicName}
-                onGameComplete={handleGameComplete}
-              />
+            {(selectedGameType === 'WORD_SCRAMBLE' ||
+              selectedGameType === 'CROSSWORD' ||
+              selectedGameType === 'HANGMAN' ||
+              selectedGameType === 'FILL_BLANK' ||
+              selectedGameType === 'CONCEPT_CANNON') && (
+              <FullScreenShell
+                title={`${
+                  selectedGameType === 'WORD_SCRAMBLE'
+                    ? 'Word Scramble'
+                    : selectedGameType === 'CROSSWORD'
+                    ? 'Crossword Puzzle'
+                    : selectedGameType === 'HANGMAN'
+                    ? 'Hangman Drill'
+                    : selectedGameType === 'FILL_BLANK'
+                    ? 'Fill The Blank'
+                    : 'Concept Cannon'
+                }: ${selectedTopicName}`}
+                subtitle="Interactive concept drill & terminology challenge"
+                icon={
+                  selectedGameType === 'WORD_SCRAMBLE'
+                    ? '🔤'
+                    : selectedGameType === 'CROSSWORD'
+                    ? '📝'
+                    : selectedGameType === 'HANGMAN'
+                    ? '💀'
+                    : selectedGameType === 'FILL_BLANK'
+                    ? '⚡'
+                    : '🎯'
+                }
+                currentPage="game"
+                user={auth.user}
+                onNavigate={handleNavigate}
+                onLogout={handleLogout}
+                showBackButton={true}
+                onBack={() => setCurrentPage(gameOrigin === 'interview' ? 'interview-game-select' : 'arcade')}
+              >
+                {selectedGameType === 'WORD_SCRAMBLE' && (
+                  <WordScramble
+                    topicId={selectedTopicId}
+                    topicName={selectedTopicName}
+                    onGameComplete={handleGameComplete}
+                  />
+                )}
+                {selectedGameType === 'CROSSWORD' && (
+                  <CrosswordPuzzle
+                    topicId={selectedTopicId}
+                    topicName={selectedTopicName}
+                    onGameComplete={handleGameComplete}
+                  />
+                )}
+                {selectedGameType === 'HANGMAN' && (
+                  <Hangman
+                    topicId={selectedTopicId}
+                    topicName={selectedTopicName}
+                    onGameComplete={handleGameComplete}
+                  />
+                )}
+                {selectedGameType === 'FILL_BLANK' && (
+                  <FillTheBlank
+                    topicId={selectedTopicId}
+                    topicName={selectedTopicName}
+                    onGameComplete={handleGameComplete}
+                  />
+                )}
+                {selectedGameType === 'CONCEPT_CANNON' && (
+                  <ConceptCannon
+                    topicId={selectedTopicId}
+                    topicName={selectedTopicName}
+                    onGameComplete={handleGameComplete}
+                  />
+                )}
+              </FullScreenShell>
             )}
-            {selectedGameType === 'CROSSWORD' && (
-              <CrosswordPuzzle
-                topicId={selectedTopicId}
-                topicName={selectedTopicName}
-                onGameComplete={handleGameComplete}
-              />
-            )}
-            {selectedGameType === 'HANGMAN' && (
-              <Hangman
-                topicId={selectedTopicId}
-                topicName={selectedTopicName}
-                onGameComplete={handleGameComplete}
-              />
-            )}
-            {selectedGameType === 'FILL_BLANK' && (
-              <FillTheBlank
-                topicId={selectedTopicId}
-                topicName={selectedTopicName}
-                onGameComplete={handleGameComplete}
-              />
-            )}
-            {selectedGameType === 'CONCEPT_CANNON' && (
-              <ConceptCannon
-                topicId={selectedTopicId}
-                topicName={selectedTopicName}
-                onGameComplete={handleGameComplete}
-              />
-            )}
-          </div>
+          </>
         )}
           </main>
         </div>

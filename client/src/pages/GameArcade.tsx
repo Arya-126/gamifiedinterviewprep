@@ -56,10 +56,13 @@ export const GameArcade: React.FC<GameArcadeProps> = ({
     <FullScreenShell
       title="Game Arcade"
       subtitle={`Interactive drills and arcade mini-games for ${topicName}`}
+      icon="🕹️"
       currentPage="game-arcade"
       user={user}
       onNavigate={onNavigate}
       onLogout={onLogout}
+      showBackButton={!!onBack}
+      onBack={onBack}
     >
       <div className="max-w-6xl mx-auto space-y-6 relative">
         {selectedGameForNotes && (

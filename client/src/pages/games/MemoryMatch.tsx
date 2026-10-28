@@ -9,6 +9,7 @@ interface MemoryMatchProps {
   user?: any;
   onNavigate?: (page: string) => void;
   onLogout?: () => void;
+  onBack?: () => void;
 }
 
 interface Card {
@@ -27,6 +28,7 @@ export const MemoryMatch: React.FC<MemoryMatchProps> = ({
   user,
   onNavigate = () => {},
   onLogout,
+  onBack,
 }) => {
   const [cards, setCards] = useState<Card[]>([]);
   const [sessionKey, setSessionKey] = useState<string | null>(null);
@@ -181,10 +183,13 @@ export const MemoryMatch: React.FC<MemoryMatchProps> = ({
     <FullScreenShell
       title={`Memory Match: ${topicName}`}
       subtitle="Pair terms with their matching technical definitions"
+      icon="🧠"
       currentPage="game-memory-match"
       user={user}
       onNavigate={onNavigate}
       onLogout={onLogout}
+      showBackButton={!!onBack}
+      onBack={onBack}
     >
       <div className="max-w-5xl mx-auto space-y-6">
         {loading ? (
@@ -218,7 +223,7 @@ export const MemoryMatch: React.FC<MemoryMatchProps> = ({
               onClick={onGameComplete}
               className="w-full py-4 bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white text-xs font-bold rounded-xl transition shadow-lg shadow-indigo-500/25 active:scale-95"
             >
-              Back to Arcade
+              Continue →
             </button>
           </div>
         ) : (
