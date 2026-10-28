@@ -78,12 +78,31 @@ interface AuthState {
 }
 
 const App: React.FC = () => {
-  const [auth, setAuth] = useState<AuthState>({
-    user: null,
-    token: localStorage.getItem('token'),
-    loading: false
+  const [auth, setAuth] = useState<AuthState>(() => {
+    const token = localStorage.getItem('token');
+    const savedUser = localStorage.getItem('user');
+    let user = null;
+    if (savedUser) {
+      try {
+        user = JSON.parse(savedUser);
+      } catch (e) {
+        // ignore
+      }
+    }
+    return {
+      user,
+      token,
+      loading: false
+    };
   });
-  const [currentPage, setCurrentPage] = useState(() => sessionStorage.getItem('currentPage') || 'home');
+  const [currentPage, setCurrentPage] = useState(() => {
+    const saved = sessionStorage.getItem('currentPage');
+    const savedUser = localStorage.getItem('user');
+    if (!savedUser && saved && saved !== 'login' && saved !== 'register') {
+      return 'home';
+    }
+    return saved || 'home';
+  });
   const [selectedTopicId, setSelectedTopicId] = useState<string | null>(() => sessionStorage.getItem('selectedTopicId'));
   const [selectedTopicName, setSelectedTopicName] = useState<string>(() => sessionStorage.getItem('selectedTopicName') || '');
   const [selectedGameType, setSelectedGameType] = useState<string | null>(() => sessionStorage.getItem('selectedGameType'));
@@ -151,12 +170,10 @@ const App: React.FC = () => {
     };
   }, []);
 
-  // Post-auth landing decision. User requested landing on the full-screen
-  // learning games page immediately after login.
+  // Post-auth landing decision — land on Home dashboard
   const routeAfterAuth = async () => {
-    setCurrentPage('prep-games');
+    setCurrentPage('interview-home');
   };
-
 
   const handleRegister = async (name: string, email: string, password: string, role: string) => {
     setError(null);
@@ -169,6 +186,7 @@ const App: React.FC = () => {
         role
       });
       localStorage.setItem('token', response.token);
+      localStorage.setItem('user', JSON.stringify(response.user));
       apiClient.setToken(response.token);
       setAuth({ user: response.user, token: response.token, loading: false });
       await routeAfterAuth();
@@ -186,6 +204,7 @@ const App: React.FC = () => {
     try {
       const response = await apiClient.post<any>('/auth/login', { email, password });
       localStorage.setItem('token', response.token);
+      localStorage.setItem('user', JSON.stringify(response.user));
       apiClient.setToken(response.token);
       setAuth({ user: response.user, token: response.token, loading: false });
       await routeAfterAuth();
@@ -199,10 +218,17 @@ const App: React.FC = () => {
 
   const handleLogout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    sessionStorage.clear();
     apiClient.setToken(null);
     setAuth({ user: null, token: null, loading: false });
     setCurrentPage('home');
     setError(null);
+  };
+
+  const handleNavigate = (page: string) => {
+    setError(null);
+    setCurrentPage(page);
   };
 
   const handleSelectTopic = (topicId: string, topicName: string) => {
@@ -239,10 +265,40 @@ const App: React.FC = () => {
   // Pages that own the full viewport (their own chrome, no LearnHub nav/sidebar).
   // Kept in one const so future immersive pages just append here.
   const FULLSCREEN_PAGES = new Set([
+    'interview-home',
+    'pipeline',
+    'placement-drive',
+    'prep-tracker',
+    'reports',
+    'test-report',
+    'prep-games',
+    'quests-hub',
+    'interview-hub',
+    'interview-category',
+    'interview-theory',
+    'interview-quiz',
+    'interview-game-select',
+    'coding-tracks',
+    'problem-solver',
+    'core-cs-hub',
+    'assessments',
+    'assessment-runner',
+    'company-prep',
+    'company-detail',
+    'hr-prep',
+    'ai-interview',
     'interview-room',
     'coding-interview-room',
+    'contests',
+    'leaderboard',
+    'achievements',
+    'domains',
+    'journey',
+    'tutorial',
+    'dashboard',
+    'diagnostic-intro',
+    'diagnostic-result',
     'diagnostic-test',
-    'prep-games',
     'game-complexity-sort',
     'game-time-rush',
     'game-star-roleplay',
@@ -254,7 +310,7 @@ const App: React.FC = () => {
   const isFullscreen = FULLSCREEN_PAGES.has(currentPage);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-slate-50 to-violet-100 relative">
+    <div className={`min-h-screen relative ${isFullscreen ? 'bg-slate-950' : 'bg-gradient-to-br from-indigo-50 via-slate-50 to-violet-100'}`}>
       {/* Achievement Toasts */}
       {achievementQueue.length > 0 && (
         <AchievementToast
@@ -402,11 +458,19 @@ const App: React.FC = () => {
         )}
 
         {currentPage === 'interview-home' && auth.user && (
-          <InterviewHome userName={auth.user.name} onNavigate={(p) => { setCurrentPage(p); setError(null); }} />
+          <InterviewHome
+            user={auth.user}
+            userName={auth.user.name}
+            onNavigate={(p) => { setCurrentPage(p); setError(null); }}
+            onLogout={handleLogout}
+          />
         )}
 
         {currentPage === 'coding-tracks' && auth.user && (
           <CodingTracks
+            user={auth.user}
+            onLogout={handleLogout}
+            onNavigate={handleNavigate}
             onBack={() => setCurrentPage('interview-home')}
             onOpenProblem={(slug) => { setSelectedProblemSlug(slug); setCurrentPage('problem-solver'); }}
           />
@@ -416,12 +480,18 @@ const App: React.FC = () => {
           <ProblemSolver
             key={selectedProblemSlug}
             slug={selectedProblemSlug}
+            user={auth.user}
+            onLogout={handleLogout}
+            onNavigate={handleNavigate}
             onBack={() => { setSelectedProblemSlug(null); setCurrentPage('coding-tracks'); }}
           />
         )}
 
         {currentPage === 'hr-prep' && auth.user && (
           <HrPrep
+            user={auth.user}
+            onLogout={handleLogout}
+            onNavigate={handleNavigate}
             onBack={() => setCurrentPage('interview-home')}
             onPracticeWithAI={(question) => {
               setCompletedInterviewId(null);
@@ -441,11 +511,19 @@ const App: React.FC = () => {
         )}
 
         {currentPage === 'dashboard' && auth.user && (
-          <DashboardPage user={auth.user} setCurrentPage={setCurrentPage} />
+          <DashboardPage
+            user={auth.user}
+            onLogout={handleLogout}
+            onNavigate={handleNavigate}
+            setCurrentPage={setCurrentPage}
+          />
         )}
 
         {currentPage === 'diagnostic-intro' && auth.user && (
           <DiagnosticIntro
+            user={auth.user}
+            onLogout={handleLogout}
+            onNavigate={handleNavigate}
             onStart={(attemptId) => {
               setDiagnosticAttemptId(attemptId);
               setDiagnosticResult(null);
@@ -472,6 +550,9 @@ const App: React.FC = () => {
         {currentPage === 'diagnostic-result' && auth.user && diagnosticResult && (
           <DiagnosticResult
             result={diagnosticResult}
+            user={auth.user}
+            onLogout={handleLogout}
+            onNavigate={handleNavigate}
             onContinue={() => {
               setDiagnosticAttemptId(null);
               setDiagnosticResult(null);
@@ -483,12 +564,14 @@ const App: React.FC = () => {
 
         {currentPage === 'pipeline' && auth.user && (
           <PipelinePage
+            user={auth.user}
+            onLogout={handleLogout}
             onNavigate={(page, ctx) => {
               // ctx may seed context (subject, topicSlug, roundType, etc.) —
               // stash the interesting bits in existing state slots so the
               // target page can pick them up when it renders.
               if (ctx?.categorySlug) setSelectedInterviewCategorySlug(ctx.categorySlug);
-              setCurrentPage(page);
+              handleNavigate(page);
             }}
             onNoDiagnostic={() => setCurrentPage('diagnostic-intro')}
           />
@@ -497,16 +580,21 @@ const App: React.FC = () => {
         {currentPage === 'test-report' && auth.user && reportId && (
           <TestReport
             reportId={reportId}
+            user={auth.user}
+            onLogout={handleLogout}
             onBack={() => { setReportId(null); setCurrentPage('reports'); }}
             onNavigate={(page, ctx) => {
               if (ctx?.categorySlug) setSelectedInterviewCategorySlug(ctx.categorySlug);
-              setCurrentPage(page);
+              handleNavigate(page);
             }}
           />
         )}
 
         {currentPage === 'reports' && auth.user && (
           <ReportsInbox
+            user={auth.user}
+            onLogout={handleLogout}
+            onNavigate={handleNavigate}
             onOpen={(id) => { setReportId(id); setCurrentPage('test-report'); }}
           />
         )}
@@ -515,43 +603,84 @@ const App: React.FC = () => {
           <PrepGamesHub
             user={auth.user}
             onOpen={(k) => setCurrentPage(`game-${k}`)}
-            onNavigate={(page) => { setCurrentPage(page); setError(null); }}
+            onNavigate={handleNavigate}
             onLogout={handleLogout}
           />
         )}
         {currentPage === 'game-complexity-sort' && auth.user && (
-          <ComplexitySortGame onBack={() => setCurrentPage('prep-games')} />
+          <ComplexitySortGame
+            user={auth.user}
+            onLogout={handleLogout}
+            onNavigate={handleNavigate}
+            onBack={() => setCurrentPage('prep-games')}
+          />
         )}
         {currentPage === 'game-time-rush' && auth.user && (
-          <TimeRushGame onBack={() => setCurrentPage('prep-games')} />
+          <TimeRushGame
+            user={auth.user}
+            onLogout={handleLogout}
+            onNavigate={handleNavigate}
+            onBack={() => setCurrentPage('prep-games')}
+          />
         )}
         {currentPage === 'game-star-roleplay' && auth.user && (
-          <StarRoleplayGame onBack={() => setCurrentPage('prep-games')} />
+          <StarRoleplayGame
+            user={auth.user}
+            onLogout={handleLogout}
+            onNavigate={handleNavigate}
+            onBack={() => setCurrentPage('prep-games')}
+          />
         )}
         {currentPage === 'game-bug-hunt' && auth.user && (
-          <BugHuntGame onBack={() => setCurrentPage('prep-games')} />
+          <BugHuntGame
+            user={auth.user}
+            onLogout={handleLogout}
+            onNavigate={handleNavigate}
+            onBack={() => setCurrentPage('prep-games')}
+          />
         )}
         {currentPage === 'game-dry-run' && auth.user && (
-          <DryRunGame onBack={() => setCurrentPage('prep-games')} />
+          <DryRunGame
+            user={auth.user}
+            onLogout={handleLogout}
+            onNavigate={handleNavigate}
+            onBack={() => setCurrentPage('prep-games')}
+          />
         )}
         {currentPage === 'game-sql-puzzle' && auth.user && (
-          <SqlPuzzleGame onBack={() => setCurrentPage('prep-games')} />
+          <SqlPuzzleGame
+            user={auth.user}
+            onLogout={handleLogout}
+            onNavigate={handleNavigate}
+            onBack={() => setCurrentPage('prep-games')}
+          />
         )}
         {currentPage === 'game-diagram-labeler' && auth.user && (
-          <DiagramLabelerGame onBack={() => setCurrentPage('prep-games')} />
+          <DiagramLabelerGame
+            user={auth.user}
+            onLogout={handleLogout}
+            onNavigate={handleNavigate}
+            onBack={() => setCurrentPage('prep-games')}
+          />
         )}
 
         {/* DOMAIN HUB ROUTES */}
         {currentPage === 'domains' && auth.user && (
           <DomainSelection 
+            user={auth.user}
+            onLogout={handleLogout}
+            onNavigate={handleNavigate}
             onSelectDomain={(slug) => { setSelectedDomainSlug(slug); setCurrentPage('journey'); }}
-            onBack={() => setCurrentPage('dashboard')}
+            onBack={() => setCurrentPage('interview-home')}
           />
         )}
 
         {currentPage === 'journey' && auth.user && selectedDomainSlug && (
           <DomainJourney
             domainSlug={selectedDomainSlug}
+            user={auth.user}
+            onLogout={handleLogout}
+            onNavigate={handleNavigate}
             onSelectTopic={(id, name) => { handleSelectTopic(id, name); }}
             onLearnConcept={(id) => { setSelectedTopicId(id); setCurrentPage('tutorial'); }}
             onBack={() => setCurrentPage('domains')}
@@ -561,6 +690,9 @@ const App: React.FC = () => {
         {currentPage === 'tutorial' && auth.user && selectedTopicId && (
           <ConceptTutorial
             topicId={selectedTopicId}
+            user={auth.user}
+            onLogout={handleLogout}
+            onNavigate={handleNavigate}
             onReadyToPlay={() => { 
               setCurrentPage('arcade'); 
             }}
@@ -569,30 +701,41 @@ const App: React.FC = () => {
         )}
 
         {currentPage === 'achievements' && auth.user && (
-          <AchievementsPage onBack={() => setCurrentPage('dashboard')} />
+          <AchievementsPage
+            user={auth.user}
+            onLogout={handleLogout}
+            onNavigate={handleNavigate}
+            onBack={() => setCurrentPage('interview-home')}
+          />
         )}
 
         {currentPage === 'review-queue' && auth.user &&
           (auth.user.role === 'ADMIN' || auth.user.role === 'EDUCATOR') && (
-          <ReviewQueue onBack={() => setCurrentPage('dashboard')} />
+          <ReviewQueue onBack={() => setCurrentPage('interview-home')} />
         )}
 
         {currentPage === 'test-builder' && auth.user &&
           (auth.user.role === 'ADMIN' || auth.user.role === 'EDUCATOR') && (
-          <TestBuilder onBack={() => setCurrentPage('dashboard')} />
+          <TestBuilder onBack={() => setCurrentPage('interview-home')} />
         )}
 
         {currentPage === 'assessments' && auth.user && (
           <AssessmentList
+            user={auth.user}
+            onLogout={handleLogout}
+            onNavigate={handleNavigate}
             onStart={(testId) => { setSelectedAssessmentId(testId); setCurrentPage('assessment-runner'); }}
             onOpenCompany={(slug) => { setSelectedCompanySlug(slug); setCurrentPage('company-prep'); }}
-            onBack={() => setCurrentPage('dashboard')}
+            onBack={() => setCurrentPage('interview-home')}
           />
         )}
 
         {currentPage === 'company-prep' && auth.user && selectedCompanySlug && (
           <CompanyDetail
             slug={selectedCompanySlug}
+            user={auth.user}
+            onLogout={handleLogout}
+            onNavigate={handleNavigate}
             onBack={() => setCurrentPage('assessments')}
             onStartTest={(testId) => { setSelectedAssessmentId(testId); setCurrentPage('assessment-runner'); }}
             onStartInterview={(role, companyId) => {
@@ -616,6 +759,9 @@ const App: React.FC = () => {
           <AssessmentRunner
             key={selectedAssessmentId}
             testId={selectedAssessmentId}
+            user={auth.user}
+            onLogout={handleLogout}
+            onNavigate={handleNavigate}
             onExit={() => { setSelectedAssessmentId(null); setCurrentPage('assessments'); }}
             onPractice={(newTestId) => setSelectedAssessmentId(newTestId)}
           />
@@ -623,31 +769,48 @@ const App: React.FC = () => {
 
         {currentPage === 'admin-reports' && auth.user &&
           (auth.user.role === 'ADMIN' || auth.user.role === 'EDUCATOR') && (
-          <AdminReports onBack={() => setCurrentPage('dashboard')} />
+          <AdminReports onBack={() => setCurrentPage('interview-home')} />
         )}
 
         {currentPage === 'core-cs-hub' && auth.user && (
-          <CoreCsHub onBack={() => setCurrentPage('dashboard')} />
+          <CoreCsHub
+            user={auth.user}
+            onLogout={handleLogout}
+            onNavigate={handleNavigate}
+            onBack={() => setCurrentPage('interview-home')}
+          />
         )}
 
         {currentPage === 'quests-hub' && auth.user && (
-          <QuestHub onNavigate={setCurrentPage} />
+          <QuestHub
+            user={auth.user}
+            onLogout={handleLogout}
+            onNavigate={handleNavigate}
+          />
         )}
 
         {currentPage === 'placement-drive' && auth.user && (
           <PlacementDriveWizard
-            onExit={() => setCurrentPage('dashboard')}
+            user={auth.user}
+            onLogout={handleLogout}
+            onNavigate={handleNavigate}
+            onExit={() => setCurrentPage('interview-home')}
             onNavigateQuests={() => setCurrentPage('quests-hub')}
           />
         )}
 
         {currentPage === 'prep-tracker' && auth.user && (
-          <PrepTrackerDashboard onNavigate={setCurrentPage} />
+          <PrepTrackerDashboard
+            user={auth.user}
+            onLogout={handleLogout}
+            onNavigate={handleNavigate}
+            onBack={() => setCurrentPage('interview-home')}
+          />
         )}
 
         {currentPage === 'ai-interview' && auth.user && (
           <InterviewChat
-            onBack={() => { setCompletedInterviewId(null); setCurrentPage('dashboard'); }}
+            onBack={() => { setCompletedInterviewId(null); setCurrentPage('interview-home'); }}
             initialInterviewId={completedInterviewId}
             onStartVideo={(role, companyId, roundType, resumeData) => {
               setCompletedInterviewId(null);
@@ -692,39 +855,43 @@ const App: React.FC = () => {
 
         {currentPage === 'contests' && auth.user && (
           <ContestsHub
-            onBack={() => setCurrentPage('dashboard')}
+            user={auth.user}
+            onLogout={handleLogout}
+            onNavigate={handleNavigate}
+            onBack={() => setCurrentPage('interview-home')}
             onStart={(testId) => { setSelectedAssessmentId(testId); setCurrentPage('assessment-runner'); }}
           />
         )}
 
         {currentPage === 'leaderboard' && auth.user && (
-          <div>
-            <div className="mb-4">
-              <button
-                onClick={() => setCurrentPage('dashboard')}
-                className="text-indigo-600 hover:text-indigo-800 font-bold flex items-center gap-2"
-              >
-                ← Back to Dashboard
-              </button>
-            </div>
-            <LeaderboardPage />
-          </div>
+          <LeaderboardPage
+            user={auth.user}
+            onLogout={handleLogout}
+            onNavigate={handleNavigate}
+            onBack={() => setCurrentPage('interview-home')}
+          />
         )}
 
         {/* INTERVIEW PREP ROUTES */}
         {currentPage === 'interview-hub' && auth.user && (
           <InterviewHub
+            user={auth.user}
+            onLogout={handleLogout}
+            onNavigate={handleNavigate}
             onSelectCategory={(slug) => {
               setSelectedInterviewCategorySlug(slug);
               setCurrentPage('interview-category');
             }}
-            onBack={() => setCurrentPage('dashboard')}
+            onBack={() => setCurrentPage('interview-home')}
           />
         )}
 
         {currentPage === 'interview-category' && auth.user && selectedInterviewCategorySlug && (
           <InterviewCategory
             categorySlug={selectedInterviewCategorySlug}
+            user={auth.user}
+            onLogout={handleLogout}
+            onNavigate={handleNavigate}
             onSelectTheory={(topicId) => {
               setSelectedInterviewTopicId(topicId);
               setCurrentPage('interview-theory');
@@ -746,6 +913,9 @@ const App: React.FC = () => {
         {currentPage === 'interview-theory' && auth.user && selectedInterviewTopicId && (
           <InterviewTheory
             topicId={selectedInterviewTopicId}
+            user={auth.user}
+            onLogout={handleLogout}
+            onNavigate={handleNavigate}
             onReadyToPractice={() => setCurrentPage('interview-quiz')}
             onStudyGames={() => setCurrentPage('interview-game-select')}
             onBack={() => setCurrentPage('interview-category')}
@@ -756,6 +926,9 @@ const App: React.FC = () => {
           <InterviewQuiz
             topicId={selectedInterviewTopicId}
             topicName={selectedTopicName}
+            user={auth.user}
+            onLogout={handleLogout}
+            onNavigate={handleNavigate}
             onComplete={() => setCurrentPage('interview-hub')}
             onReviewTheory={() => setCurrentPage('interview-theory')}
           />
@@ -765,6 +938,9 @@ const App: React.FC = () => {
           <InterviewGameSelect
             topicId={selectedInterviewTopicId}
             topicName={selectedTopicName}
+            user={auth.user}
+            onLogout={handleLogout}
+            onNavigate={handleNavigate}
             onSelectGame={(gameId) => setCurrentPage(`interview-${gameId}`)}
             onSelectClassicGame={(gameType) => {
               // classic engines fetch /games/mini/:topicId — the polymorphic
@@ -812,6 +988,9 @@ const App: React.FC = () => {
           <GameArcade
             topicId={selectedTopicId}
             topicName={selectedTopicName}
+            user={auth.user}
+            onLogout={handleLogout}
+            onNavigate={handleNavigate}
             onSelectGame={handleSelectGame}
             onBack={() => setCurrentPage('journey')}
           />

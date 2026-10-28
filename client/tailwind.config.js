@@ -28,6 +28,10 @@ export default {
         'progress-grow': {
           '0%': { width: '0%' },
         },
+        'slide-right': {
+          '0%': { transform: 'translateX(-100%)' },
+          '100%': { transform: 'translateX(0)' },
+        },
       },
       animation: {
         'fade-in-up': 'fade-in-up 0.5s ease-out both',
@@ -35,6 +39,7 @@ export default {
         'scale-in': 'scale-in 0.3s ease-out both',
         'float': 'float 4s ease-in-out infinite',
         'progress-grow': 'progress-grow 1s ease-out',
+        'slide-right': 'slide-right 0.25s cubic-bezier(0.16, 1, 0.3, 1) both',
       },
       boxShadow: {
         'soft': '0 2px 12px -2px rgb(0 0 0 / 0.08)',
