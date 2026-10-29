@@ -21,6 +21,7 @@ interface GameSessionProps {
   user?: any;
   onNavigate?: (page: string) => void;
   onLogout?: () => void;
+  onBack?: () => void;
 }
 
 interface Answer {
@@ -45,6 +46,7 @@ export const GameSession: React.FC<GameSessionProps> = ({
   user,
   onNavigate = () => {},
   onLogout,
+  onBack,
 }) => {
   const [sessionKey, setSessionKey] = useState<string | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -183,10 +185,13 @@ export const GameSession: React.FC<GameSessionProps> = ({
     <FullScreenShell
       title={`Session: ${topicName}`}
       subtitle="Timed quiz challenge with hints and instant feedback"
+      icon="📝"
       currentPage="game-session"
       user={user}
       onNavigate={onNavigate}
       onLogout={onLogout}
+      showBackButton={!!onBack}
+      onBack={onBack}
     >
       <div className="max-w-3xl mx-auto space-y-6">
         {loading ? (

@@ -24,6 +24,8 @@ export interface FullScreenShellProps {
   onLogout?: () => void;
   /** Optional back button handler */
   onBack?: () => void;
+  /** Whether to display the back button (defaults to false) */
+  showBackButton?: boolean;
   /** Optional custom elements to place in the header */
   headerActions?: React.ReactNode;
   /** Custom class for the main wrapper (default: max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8) */
@@ -46,6 +48,7 @@ export const FullScreenShell: React.FC<FullScreenShellProps> = ({
   onNavigate,
   onLogout,
   onBack,
+  showBackButton = false,
   headerActions,
   contentClassName,
   children,
@@ -141,8 +144,9 @@ export const FullScreenShell: React.FC<FullScreenShellProps> = ({
           {/* Left section: Hamburger menu + Back button + Title */}
           <div className="flex items-center gap-2.5 sm:gap-3">
             <button
-              onClick={() => setDrawerOpen(true)}
-              title="Open Navigation Menu (All Pages)"
+              onClick={() => setDrawerOpen(prev => !prev)}
+              title="Toggle Navigation Menu (3 lines)"
+              aria-label="Toggle Navigation Menu"
               className="p-2.5 rounded-xl bg-slate-800 hover:bg-indigo-600/30 border border-slate-700/60 hover:border-indigo-500/50 text-slate-200 hover:text-white transition-all shadow-md group active:scale-95 flex items-center justify-center cursor-pointer"
             >
               <div className="w-5 h-4 flex flex-col justify-between">
@@ -152,7 +156,7 @@ export const FullScreenShell: React.FC<FullScreenShellProps> = ({
               </div>
             </button>
 
-            {onBack && (
+            {showBackButton && onBack && (
               <button
                 onClick={onBack}
                 title="Go Back"
@@ -182,32 +186,6 @@ export const FullScreenShell: React.FC<FullScreenShellProps> = ({
             </div>
           </div>
 
-          {/* Center section: Required PIPELINE & HOME buttons */}
-          <div className="flex items-center gap-2 sm:gap-3">
-            <button
-              onClick={() => onNavigate('pipeline')}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all transform hover:-translate-y-0.5 active:scale-95 cursor-pointer ${
-                currentPage === 'pipeline'
-                  ? 'bg-gradient-to-r from-emerald-400 to-teal-500 text-white ring-2 ring-emerald-400/50 shadow-lg shadow-emerald-900/40'
-                  : 'bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white shadow-lg shadow-emerald-900/30 hover:shadow-emerald-700/50'
-              }`}
-            >
-              <span className="text-sm">🎯</span>
-              <span className="hidden xs:inline">My</span> Pipeline
-            </button>
-
-            <button
-              onClick={() => onNavigate('interview-home')}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all transform hover:-translate-y-0.5 active:scale-95 cursor-pointer ${
-                currentPage === 'interview-home'
-                  ? 'bg-indigo-600 text-white ring-2 ring-indigo-400/50 shadow-lg shadow-indigo-900/40'
-                  : 'bg-slate-800 hover:bg-slate-700 border border-slate-700/80 hover:border-slate-600 text-slate-200 hover:text-white'
-              }`}
-            >
-              <span className="text-sm">🏠</span>
-              <span>Home</span>
-            </button>
-          </div>
 
           {/* Right section: Header actions + User Stats & Controls */}
           <div className="flex items-center gap-2 sm:gap-3">

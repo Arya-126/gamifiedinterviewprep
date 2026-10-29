@@ -145,20 +145,17 @@ async function seed() {
     console.log(`✅ Seeded ${users.length} users`);
 
     // 6. Seed Interview Prep Data
-    console.log('🌱 Seeding Interview Preparation Module...');
-    
-    // Clear old interview data
-    await prisma.userInterviewProgress.deleteMany({});
-    await prisma.interviewTheory.deleteMany({});
-    await prisma.interviewQuestion.deleteMany({});
-    await prisma.interviewTopic.deleteMany({});
-    await prisma.interviewCategory.deleteMany({});
-
     // Read JSON files
     const questionsPath = 'c:/Users/Lenovo/Downloads/aptitude_book_470_solved (1).json';
     const theoryPath = 'c:/Users/Lenovo/Downloads/topic_theory_notes.json';
     
     if (fs.existsSync(questionsPath) && fs.existsSync(theoryPath)) {
+      // Clear old interview data only if new data is available
+      await prisma.userInterviewProgress.deleteMany({});
+      await prisma.interviewTheory.deleteMany({});
+      await prisma.interviewQuestion.deleteMany({});
+      await prisma.interviewTopic.deleteMany({});
+      await prisma.interviewCategory.deleteMany({});
       const questionsData = JSON.parse(fs.readFileSync(questionsPath, 'utf8'));
       const theoryData = JSON.parse(fs.readFileSync(theoryPath, 'utf8'));
 

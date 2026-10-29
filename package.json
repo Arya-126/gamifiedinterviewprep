@@ -1,0 +1,15 @@
+{
+  "name": "capstone-root",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "npm --prefix client run build && npm --prefix server run build",
+    "build:client": "npm --prefix client run build",
+    "build:server": "npm --prefix server run build",
+    "dev:client": "npm --prefix client run dev",
+    "dev:server": "npm --prefix server run dev",
+    "prisma:generate": "npm --prefix server run prisma:generate",
+    "prisma:push": "npm --prefix server exec prisma db push",
+    "seed": "npm --prefix server run seed"
+  }
+}

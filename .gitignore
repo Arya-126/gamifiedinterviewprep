@@ -17,4 +17,11 @@ server/uploads/
 
 # Local-only files
 B2_course materials_60hr.pdf
-.claude/settings.local.json
+.claude/
+*.docx
+*.pdf
+*.tex
+capstone/
+final_report_work/
+paper_draft/
+output/
